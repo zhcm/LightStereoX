@@ -61,7 +61,7 @@ optimizer = LazyCall(AdamW)(
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.01)
 
-# CLIP GRAD
+# clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 

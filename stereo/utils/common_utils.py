@@ -77,11 +77,9 @@ def freeze_bn(module):
     return module
 
 
-def load_params_from_file(model, filename, device, dist_mode, logger, strict=True):
-    checkpoint = torch.load(filename, map_location=device)
-    pretrained_state_dict = checkpoint['model_state']
-    tmp_model = model.module if dist_mode else model
-    state_dict = tmp_model.state_dict()
+def load_params_from_file(model, filename, device, logger, strict=True):
+    pretrained_state_dict = torch.load(filename, map_location=device)
+    state_dict = model.state_dict()
 
     unused_state_dict = {}
     update_state_dict = {}
@@ -96,10 +94,10 @@ def load_params_from_file(model, filename, device, dist_mode, logger, strict=Tru
             unupdate_state_dict[key] = state_dict[key]
 
     if strict:
-        tmp_model.load_state_dict(update_state_dict)
+        model.load_state_dict(update_state_dict)
     else:
         state_dict.update(update_state_dict)
-        tmp_model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict)
 
     message = 'Unused weight: '
     for key, val in unused_state_dict.items():

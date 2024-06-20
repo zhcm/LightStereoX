@@ -90,7 +90,7 @@ def main():
     args.ckpt_dir = ckpt_dir
     model_trainer = Trainer(args, cfg, logger, tb_writer)
 
-    tbar = tqdm.trange(model_trainer.last_epoch + 1, model_trainer.total_epochs,
+    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.train_params.train_epochs,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
                        bar_format='{l_bar}{bar}{r_bar}\n')
     # train loop

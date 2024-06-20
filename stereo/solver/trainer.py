@@ -10,7 +10,6 @@ import torch.distributed as dist
 
 from stereo.config.instantiate import instantiate
 from stereo.utils import common_utils
-from stereo.utils.common_utils import write_tensorboard
 from stereo.evaluation import metric_names, metric_funcs
 
 
@@ -18,84 +17,86 @@ class Trainer:
     def __init__(self, args, cfg, logger, tb_writer):
         self.args = args
         self.cfg = cfg
-        self.local_rank = args.local_rank
-        self.global_rank = args.global_rank
         self.logger = logger
         self.tb_writer = tb_writer
+        self.local_rank = args.local_rank
+        self.global_rank = args.global_rank
+        self.last_epoch = -1
 
+        # model
         self.model = self.build_model()
 
         if self.args.run_mode in ['train', 'eval']:
-            self.eval_set, self.eval_loader, self.eval_sampler = self.build_eval_loader()
+            # val loader
+            cfg.val_loader.is_dist = args.dist_mode
+            self.val_set, self.val_loader, self.val_sampler = instantiate(cfg.val_loader)
+            self.logger.info('Total samples for val dataset: %d' % (len(self.val_set)))
+
         if self.args.run_mode == 'train':
-            self.train_set, self.train_loader, self.train_sampler = self.build_train_loader()
-            self.total_epochs = cfg.train_params.train_epochs
-            self.last_epoch = -1
+            # train loader
+            cfg.train_loader.is_dist = args.dist_mode
+            self.train_set, self.train_loader, self.train_sampler = instantiate(cfg.train_loader)
+            self.logger.info('Total samples for train dataset: %d' % (len(self.train_set)))
+
             # optimizer
             cfg.optimizer.params.model = self.model
             self.optimizer = instantiate(self.cfg.optimizer)
+
             # scheduler
             cfg.scheduler.optimizer = self.optimizer
             if 'total_steps' in self.cfg.scheduler:
                 cfg.scheduler.total_steps = cfg.train_params.train_epochs * len(self.train_loader)
             self.scheduler = instantiate(cfg.scheduler)
+
+            # scaler
             self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.train_params.mixed_precision)
-            if cfg.train_params.resume_from_ckpt > -1:
-                self.resume_ckpt()
+
+            # resume
+            # if cfg.train_params.resume_from_ckpt > -1:
+            #     self.resume_ckpt()
+
+            # clip grad
             if 'clip_grad' in cfg:
                 self.clip_gard = instantiate(cfg.clip_grad)
 
-    def build_train_loader(self):
-        self.cfg.train_loader.is_dist = self.args.dist_mode
-        train_set, train_loader, train_sampler = instantiate(self.cfg.train_loader)
-        self.logger.info('Total samples for train dataset: %d' % (len(train_set)))
-        return train_set, train_loader, train_sampler
-
-    def build_eval_loader(self):
-        self.cfg.val_loader.is_dist = self.args.dist_mode
-        eval_set, eval_loader, eval_sampler = instantiate(self.cfg.val_loader)
-        self.logger.info('Total samples for eval dataset: %d' % (len(eval_set)))
-        return eval_set, eval_loader, eval_sampler
-
     def build_model(self):
         model = instantiate(self.cfg.model)
-        if self.cfg.train_params.freeze_bn:
-            model = common_utils.freeze_bn(model)
-            self.logger.info('Freeze the batch normalization layers')
-
-        if self.cfg.train_params.use_sync_bn and self.args.dist_mode:
-            model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-            self.logger.info('Convert batch norm to sync batch norm')
         model = model.to(self.local_rank)
-
-        if self.args.dist_mode:
-            model = nn.parallel.DistributedDataParallel(
-                model, device_ids=[self.local_rank], output_device=self.local_rank,
-                find_unused_parameters=self.cfg.train_params.find_unused_parameters)
-
         # load pretrained model
         pretrained_model = self.cfg.train_params.pretrained_model
         if pretrained_model:
             self.logger.info('Loading parameters from checkpoint %s' % pretrained_model)
             if not os.path.isfile(pretrained_model):
                 raise FileNotFoundError
-            common_utils.load_params_from_file(
-                model, pretrained_model, device='cuda:%d' % self.local_rank,
-                dist_mode=self.args.dist_mode, logger=self.logger, strict=False)
+            common_utils.load_params_from_file(model, pretrained_model, device='cpu', logger=self.logger, strict=False)
+        # freeze bn
+        if self.cfg.train_params.freeze_bn:
+            model = common_utils.freeze_bn(model)
+            self.logger.info('Freeze the batch normalization layers')
+        # syncbn
+        if self.cfg.train_params.use_sync_bn and self.args.dist_mode:
+            model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+            self.logger.info('Convert batch norm to sync batch norm')
+        # ddp
+        if self.args.dist_mode:
+            model = nn.parallel.DistributedDataParallel(
+                model, device_ids=[self.local_rank], output_device=self.local_rank,
+                find_unused_parameters=self.cfg.train_params.find_unused_parameters)
+            self.logger.info('Convert model to DistributedDataParallel')
         return model
 
-    def resume_ckpt(self):
-        self.logger.info('Resume from ckpt:%d' % self.cfgs.MODEL.CKPT)
-        ckpt_path = str(os.path.join(self.args.ckpt_dir, 'checkpoint_epoch_%d.pth' % self.cfgs.MODEL.CKPT))
-        checkpoint = torch.load(ckpt_path, map_location='cuda:%d' % self.local_rank)
-        self.last_epoch = checkpoint['epoch']
-        self.scheduler.load_state_dict(checkpoint['scheduler_state'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state'])
-        self.scaler.load_state_dict(checkpoint['scaler_state'])
-        if self.args.dist_mode:
-            self.model.module.load_state_dict(checkpoint['model_state'])
-        else:
-            self.model.load_state_dict(checkpoint['model_state'])
+    # def resume_ckpt(self):
+    #     self.logger.info('Resume from ckpt:%d' % self.cfgs.MODEL.CKPT)
+    #     ckpt_path = str(os.path.join(self.args.ckpt_dir, 'checkpoint_epoch_%d.pth' % self.cfgs.MODEL.CKPT))
+    #     checkpoint = torch.load(ckpt_path, map_location='cuda:%d' % self.local_rank)
+    #     self.last_epoch = checkpoint['epoch']
+    #     self.scheduler.load_state_dict(checkpoint['scheduler_state'])
+    #     self.optimizer.load_state_dict(checkpoint['optimizer_state'])
+    #     self.scaler.load_state_dict(checkpoint['scaler_state'])
+    #     if self.args.dist_mode:
+    #         self.model.module.load_state_dict(checkpoint['model_state'])
+    #     else:
+    #         self.model.load_state_dict(checkpoint['model_state'])
 
     def train(self, current_epoch, tbar):
         self.model.train()
@@ -130,12 +131,12 @@ class Trainer:
 
     def train_one_epoch(self, current_epoch, tbar):
         start_epoch = self.last_epoch + 1
+        total_epochs = self.cfg.train_params.train_epochs
         total_loss = 0.0
         loss_func = self.model.module.get_loss if self.args.dist_mode else self.model.get_loss
 
         train_loader_iter = iter(self.train_loader)
         for i in range(0, len(self.train_loader)):
-            self.optimizer.zero_grad()
             lr = self.optimizer.param_groups[0]['lr']
 
             start_timer = time.time()
@@ -160,29 +161,33 @@ class Trainer:
             self.scaler.step(self.optimizer)
             # Updates the scale for next iteration.
             self.scaler.update()
+            # zero grad
+            self.optimizer.zero_grad()
+            # scheduler
+            if 'total_steps' in self.cfg.scheduler:
+                self.scheduler.step()
 
-            self.scheduler.step()
-
+            # logging
             total_loss += loss.item()
             total_iter = current_epoch * len(self.train_loader) + i
             trained_time_past_all = tbar.format_dict['elapsed']
             single_iter_second = trained_time_past_all / (total_iter + 1 - start_epoch * len(self.train_loader))
-            remaining_second_all = single_iter_second * (self.total_epochs * len(self.train_loader) - total_iter - 1)
+            remaining_second_all = single_iter_second * (total_epochs * len(self.train_loader) - total_iter - 1)
             if total_iter % self.cfg.train_params.log_period == 0:
                 message = ('Training Epoch:{:>2d}/{} Iter:{:>4d}/{} '
                            'Loss:{:#.6g}({:#.6g}) LR:{:.4e} '
                            'DataTime:{:.2f} InferTime:{:.2f}ms '
                            'Time cost: {}/{}'
-                           ).format(current_epoch, self.total_epochs, i, len(self.train_loader),
+                           ).format(current_epoch, total_epochs, i, len(self.train_loader),
                                     loss.item(), total_loss / (i + 1), lr,
                                     data_timer - start_timer, (infer_timer - data_timer) * 1000,
                                     tbar.format_interval(trained_time_past_all),
                                     tbar.format_interval(remaining_second_all))
                 self.logger.info(message)
 
-            tb_info.update({'scalar/train/lr': lr})
-            if total_iter % self.cfg.train_params.log_period == 0 and self.local_rank == 0 and self.tb_writer is not None:
-                write_tensorboard(self.tb_writer, tb_info, total_iter)
+                tb_info.update({'scalar/train/lr': lr})
+                if self.global_rank == 0 and self.tb_writer is not None:
+                    common_utils.write_tensorboard(self.tb_writer, tb_info, total_iter)
 
     @torch.no_grad()
     def eval_one_epoch(self, current_epoch):
@@ -192,7 +197,7 @@ class Trainer:
         for each in metric_names:
             epoch_metrics[each] = {'indexes': [], 'values': []}
 
-        for i, data in enumerate(self.eval_loader):
+        for i, data in enumerate(self.val_loader):
             for k, v in data.items():
                 data[k] = v.to(local_rank) if torch.is_tensor(v) else v
 
@@ -215,7 +220,7 @@ class Trainer:
 
             if i % self.cfg.train_params.log_period == 0:
                 message = ('Evaluating Epoch:{:>2d} Iter:{:>4d}/{} InferTime: {:.2f}ms'
-                           ).format(current_epoch, i, len(self.eval_loader), infer_time * 1000)
+                           ).format(current_epoch, i, len(self.val_loader), infer_time * 1000)
                 self.logger.info(message)
 
         # gather from all gpus
@@ -246,6 +251,6 @@ class Trainer:
             for k, v in results.items():
                 tb_info[f'scalar/val/{k}'] = v.item()
 
-            write_tensorboard(self.tb_writer, tb_info, current_epoch)
+            common_utils.write_tensorboard(self.tb_writer, tb_info, current_epoch)
 
         self.logger.info(f"Epoch {current_epoch} metrics: {results}")
