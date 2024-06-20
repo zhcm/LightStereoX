@@ -116,12 +116,13 @@ class Trainer:
 
     def save_ckpt(self, current_epoch):
         if self.global_rank == 0:
+            # remove
             ckpt_list = glob.glob(os.path.join(self.args.ckpt_dir, 'epoch_*'))
             ckpt_list.sort(key=os.path.getmtime)
             if len(ckpt_list) >= self.cfg.train_params.max_ckpt_save_num:
                 for cur_file_idx in range(0, len(ckpt_list) - self.cfg.train_params.max_ckpt_save_num + 1):
                     shutil.rmtree(ckpt_list[cur_file_idx])
-
+            # save
             output_dir = os.path.join(self.args.ckpt_dir, 'epoch_%d' % current_epoch)
             os.makedirs(output_dir, exist_ok=True)
             common_utils.save_checkpoint(self.model, self.optimizer, self.scheduler, self.scaler,
@@ -191,15 +192,13 @@ class Trainer:
 
     @torch.no_grad()
     def eval_one_epoch(self, current_epoch):
-        local_rank = self.local_rank
-
         epoch_metrics = {}
         for each in metric_names:
             epoch_metrics[each] = {'indexes': [], 'values': []}
 
         for i, data in enumerate(self.val_loader):
             for k, v in data.items():
-                data[k] = v.to(local_rank) if torch.is_tensor(v) else v
+                data[k] = v.to(self.local_rank) if torch.is_tensor(v) else v
 
             with torch.cuda.amp.autocast(enabled=self.cfg.train_params.mixed_precision):
                 infer_start = time.time()
@@ -208,7 +207,7 @@ class Trainer:
 
             disp_pred = model_pred['disp_pred']
             disp_gt = data["disp"]
-            mask = (disp_gt < 192) & (disp_gt > 0.5)
+            mask = (disp_gt < self.cfg.eval_params.eval_max_disp) & (disp_gt > 0.5)
             if 'occ_mask' in data:
                 mask = mask & (data['occ_mask'] == 255.0)
 
@@ -228,8 +227,8 @@ class Trainer:
             dist.barrier()
             self.logger.info("Start reduce metrics.")
             for k in epoch_metrics.keys():
-                indexes = torch.tensor(epoch_metrics[k]["indexes"]).to(local_rank)
-                values = torch.tensor(epoch_metrics[k]["values"]).to(local_rank)
+                indexes = torch.tensor(epoch_metrics[k]["indexes"]).to(self.local_rank)
+                values = torch.tensor(epoch_metrics[k]["values"]).to(self.local_rank)
                 gathered_indexes = [torch.zeros_like(indexes) for _ in range(dist.get_world_size())]
                 gathered_values = [torch.zeros_like(values) for _ in range(dist.get_world_size())]
                 dist.all_gather(gathered_indexes, indexes)
@@ -243,14 +242,13 @@ class Trainer:
                 epoch_metrics[k]["values"] = list(unique_dict.values())
 
         results = {}
-        for k in epoch_metrics.keys():
-            results[k] = torch.tensor(epoch_metrics[k]["values"]).mean()
+        for each in metric_names:
+            results[each] = torch.tensor(epoch_metrics[each]["values"]).mean()
 
-        if local_rank == 0 and self.tb_writer is not None:
+        if self.global_rank == 0 and self.tb_writer is not None:
             tb_info = {}
             for k, v in results.items():
                 tb_info[f'scalar/val/{k}'] = v.item()
-
             common_utils.write_tensorboard(self.tb_writer, tb_info, current_epoch)
 
         self.logger.info(f"Epoch {current_epoch} metrics: {results}")

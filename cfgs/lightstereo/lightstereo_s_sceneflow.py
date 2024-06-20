@@ -64,9 +64,14 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
+# eval params
+eval_params = dict(
+    eval_max_disp=192
+)
 
 # train params
 train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
                               'SceneFlowDataset/LightStereo_S')
 train_params.train_epochs = 90
 train_params.mixed_precision = True
+train_params.max_ckpt_save_num = 2
