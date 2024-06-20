@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
-from stereo.solver.build import get_model_params
+from stereo.solver.build import get_model_params, ClipGradValue
 
 from cfgs.common.train_params import train_params
 
@@ -27,6 +27,10 @@ optimizer = LazyCall(AdamW)(
 
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.01)
+
+# CLIP GRAD
+clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
+
 
 # train params
 train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'

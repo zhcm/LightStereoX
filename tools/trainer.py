@@ -12,8 +12,6 @@ from stereo.datasets import build_dataloader
 from stereo.config.instantiate import instantiate
 from stereo.utils import common_utils
 from stereo.utils.common_utils import color_map_tensorboard, write_tensorboard
-from stereo.utils.warmup import LinearWarmup
-from stereo.utils.clip_grad import ClipGrad
 
 from stereo.evaluation.metric_per_image import epe_metric, d1_metric, threshold_metric
 
@@ -27,35 +25,26 @@ class Trainer:
         self.logger = logger
         self.tb_writer = tb_writer
         self.cfg = cfg
-
         self.model = self.build_model()
-
         if self.args.run_mode in ['train', 'eval']:
             self.eval_set, self.eval_loader, self.eval_sampler = self.build_eval_loader()
-
         if self.args.run_mode == 'train':
             self.train_set, self.train_loader, self.train_sampler = self.build_train_loader()
-
-            self.total_epochs = cfgs.OPTIMIZATION.NUM_EPOCHS
+            self.total_epochs = cfg.train_params.train_epochs
             self.last_epoch = -1
-
             # optimizer
             cfg.optimizer.params.model = self.model
             self.optimizer = instantiate(self.cfg.optimizer)
-
             # scheduler
             cfg.scheduler.optimizer = self.optimizer
             if 'total_steps' in self.cfg.scheduler:
                 cfg.scheduler.total_steps = cfg.train_params.train_epochs * len(self.train_loader)
             self.scheduler = instantiate(cfg.scheduler)
-
             self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.train_params.mixed_precision)
-
             if cfg.train_params.resume_from_ckpt > -1:
                 self.resume_ckpt()
-
-            self.warmup_scheduler = self.build_warmup()
-            self.clip_gard = self.build_clip_grad()
+            if 'clip_grad' in cfg:
+                self.clip_gard = instantiate(cfg.clip_grad)
 
     def build_train_loader(self):
         train_set, train_loader, train_sampler = build_dataloader(
@@ -119,44 +108,15 @@ class Trainer:
         else:
             self.model.load_state_dict(checkpoint['model_state'])
 
-    def build_warmup(self):
-        last_step = (self.last_epoch + 1) * len(self.train_loader) - 1
-        if 'WARMUP' in self.cfgs.OPTIMIZATION.SCHEDULER:
-            warmup_steps = self.cfgs.OPTIMIZATION.SCHEDULER.WARMUP.get('WARM_STEPS', 1)
-            warmup_scheduler = LinearWarmup(
-                self.optimizer,
-                warmup_period=warmup_steps,
-                last_step=last_step)
-        else:
-            warmup_scheduler = LinearWarmup(
-                self.optimizer,
-                warmup_period=1,
-                last_step=last_step)
-
-        return warmup_scheduler
-
-    def build_clip_grad(self):
-        clip_gard = None
-        if 'CLIP_GRAD' in self.cfgs.OPTIMIZATION:
-            clip_type = self.cfgs.OPTIMIZATION.CLIP_GRAD.get('TYPE', None)
-            clip_value = self.cfgs.OPTIMIZATION.CLIP_GRAD.get('CLIP_VALUE', 0.1)
-            max_norm = self.cfgs.OPTIMIZATION.CLIP_GRAD.get('MAX_NORM', 35)
-            norm_type = self.cfgs.OPTIMIZATION.CLIP_GRAD.get('NORM_TYPE', 2)
-            clip_gard = ClipGrad(clip_type, clip_value, max_norm, norm_type)
-        return clip_gard
-
     def train(self, current_epoch, tbar):
         self.model.train()
-        if self.cfgs.OPTIMIZATION.get('FREEZE_BN', False):
+        if self.cfg.train_params.freeze_bn:
             self.model = common_utils.freeze_bn(self.model)
         if self.args.dist_mode:
             self.train_sampler.set_epoch(current_epoch)
         self.train_one_epoch(current_epoch=current_epoch, tbar=tbar)
         if self.args.dist_mode:
             dist.barrier()
-        if self.cfgs.OPTIMIZATION.SCHEDULER.ON_EPOCH:
-            self.scheduler.step()
-            self.warmup_scheduler.lrs = [group['lr'] for group in self.optimizer.param_groups]
 
     def evaluate(self, current_epoch):
         self.model.eval()
@@ -179,7 +139,6 @@ class Trainer:
 
     def train_one_epoch(self, current_epoch, tbar):
         start_epoch = self.last_epoch + 1
-        logger_iter_interval = self.cfgs.TRAINER.LOGGER_ITER_INTERVAL
         total_loss = 0.0
         loss_func = self.model.module.get_loss if self.args.dist_mode else self.model.get_loss
 
@@ -210,19 +169,15 @@ class Trainer:
             self.scaler.step(self.optimizer)
             # Updates the scale for next iteration.
             self.scaler.update()
-            # torch.cuda.empty_cache()
 
-            # warmup_scheduler period>1 和 batch_scheduler 不要同时使用
-            with self.warmup_scheduler.dampening():
-                if not self.cfgs.OPTIMIZATION.SCHEDULER.ON_EPOCH:
-                    self.scheduler.step()
+            self.scheduler.step()
 
             total_loss += loss.item()
             total_iter = current_epoch * len(self.train_loader) + i
             trained_time_past_all = tbar.format_dict['elapsed']
             single_iter_second = trained_time_past_all / (total_iter + 1 - start_epoch * len(self.train_loader))
             remaining_second_all = single_iter_second * (self.total_epochs * len(self.train_loader) - total_iter - 1)
-            if total_iter % logger_iter_interval == 0:
+            if total_iter % self.cfg.train_params.log_period == 0:
                 message = ('Training Epoch:{:>2d}/{} Iter:{:>4d}/{} '
                            'Loss:{:#.6g}({:#.6g}) LR:{:.4e} '
                            'DataTime:{:.2f} InferTime:{:.2f}ms '
@@ -234,12 +189,8 @@ class Trainer:
                                     tbar.format_interval(remaining_second_all))
                 self.logger.info(message)
 
-            if self.cfgs.TRAINER.TRAIN_VISUALIZATION:
-                tb_info['image/train/image'] = torch.cat([data['left'][0], data['right'][0]], dim=1) / 256
-                tb_info['image/train/disp'] = color_map_tensorboard(data['disp'][0], model_pred['disp_pred'].squeeze(1)[0])
-
             tb_info.update({'scalar/train/lr': lr})
-            if total_iter % logger_iter_interval == 0 and self.local_rank == 0 and self.tb_writer is not None:
+            if total_iter % self.cfg.train_params.log_period == 0 and self.local_rank == 0 and self.tb_writer is not None:
                 write_tensorboard(self.tb_writer, tb_info, total_iter)
 
     @torch.no_grad()
