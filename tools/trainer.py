@@ -26,6 +26,7 @@ class Trainer:
         self.tb_writer = tb_writer
         self.cfg = cfg
         self.model = self.build_model()
+
         if self.args.run_mode in ['train', 'eval']:
             self.eval_set, self.eval_loader, self.eval_sampler = self.build_eval_loader()
         if self.args.run_mode == 'train':
@@ -47,24 +48,14 @@ class Trainer:
                 self.clip_gard = instantiate(cfg.clip_grad)
 
     def build_train_loader(self):
-        train_set, train_loader, train_sampler = build_dataloader(
-            data_cfg=self.cfgs.DATA_CONFIG,
-            batch_size=self.cfgs.OPTIMIZATION.BATCH_SIZE_PER_GPU,
-            is_dist=self.args.dist_mode,
-            workers=self.args.workers,
-            pin_memory=self.args.pin_memory,
-            mode='training')
+        self.cfg.train_loader.is_dist = self.args.dist_mode
+        train_set, train_loader, train_sampler = instantiate(self.cfg.train_loader)
         self.logger.info('Total samples for train dataset: %d' % (len(train_set)))
         return train_set, train_loader, train_sampler
 
     def build_eval_loader(self):
-        eval_set, eval_loader, eval_sampler = build_dataloader(
-            data_cfg=self.cfgs.DATA_CONFIG,
-            batch_size=self.cfgs.EVALUATOR.BATCH_SIZE_PER_GPU,
-            is_dist=self.args.dist_mode,
-            workers=self.args.workers,
-            pin_memory=self.args.pin_memory,
-            mode='evaluating')
+        self.cfg.val_loader.is_dist = self.args.dist_mode
+        eval_set, eval_loader, eval_sampler = instantiate(self.cfg.val_loader)
         self.logger.info('Total samples for eval dataset: %d' % (len(eval_set)))
         return eval_set, eval_loader, eval_sampler
 
@@ -153,7 +144,7 @@ class Trainer:
                 data[k] = v.to(self.local_rank) if torch.is_tensor(v) else v
             data_timer = time.time()
 
-            with torch.cuda.amp.autocast(enabled=self.cfgs.OPTIMIZATION.AMP):
+            with torch.cuda.amp.autocast(enabled=self.cfg.train_params.mixed_precision):
                 model_pred = self.model(data)
                 infer_timer = time.time()
                 loss, tb_info = loss_func(model_pred, data)

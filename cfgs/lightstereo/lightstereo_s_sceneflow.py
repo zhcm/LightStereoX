@@ -4,11 +4,44 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
 from stereo.config.lazy import LazyCall, LazyConfig
-from stereo.datasets import build_dataloader
+from stereo.datasets_lazy import build_dataloader
+from stereo.datasets_lazy.dataset_utils import stereo_trans
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
 from cfgs.common.train_params import train_params
+
+# dataset
+sceneflow = LazyConfig.load('cfgs/common/dataset/sceneflow.py')
+sceneflow.train.augmentations = [
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736], y_jitter=False),
+    LazyCall(stereo_trans.TransposeImage)(),
+    LazyCall(stereo_trans.ToTensor)(),
+    LazyCall(stereo_trans.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+]
+sceneflow.val.augmentations = [
+    LazyCall(stereo_trans.RightTopPad)(size=[544, 960]),
+    LazyCall(stereo_trans.TransposeImage)(),
+    LazyCall(stereo_trans.ToTensor)(),
+    LazyCall(stereo_trans.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+]
+
+# dataloader
+train_loader = LazyCall(build_dataloader)(
+    is_dist=None,
+    all_dataset=[sceneflow.train],
+    batch_size=24,
+    shuffle=True,
+    workers=8,
+    pin_memory=True)
+
+val_loader = LazyCall(build_dataloader)(
+    is_dist=None,
+    all_dataset=[sceneflow.val],
+    batch_size=12,
+    shuffle=False,
+    workers=8,
+    pin_memory=True)
 
 # model
 model = LazyCall(LightStereo)(
