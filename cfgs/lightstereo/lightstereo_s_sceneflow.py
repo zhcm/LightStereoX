@@ -4,26 +4,23 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
 from stereo.config.lazy import LazyCall, LazyConfig
-from stereo.datasets_lazy import build_dataloader
-from stereo.datasets_lazy.dataset_utils import stereo_trans
+from stereo.datasets import build_dataloader
+from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
 from cfgs.common.train_params import train_params
+from cfgs.common.constants import constants
 
 # dataset
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = [
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736], y_jitter=False),
-    LazyCall(stereo_trans.TransposeImage)(),
-    LazyCall(stereo_trans.ToTensor)(),
-    LazyCall(stereo_trans.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 sceneflow.val.augmentations = [
-    LazyCall(stereo_trans.RightTopPad)(size=[544, 960]),
-    LazyCall(stereo_trans.TransposeImage)(),
-    LazyCall(stereo_trans.ToTensor)(),
-    LazyCall(stereo_trans.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 # dataloader
