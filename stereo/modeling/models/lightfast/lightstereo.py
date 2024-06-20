@@ -62,10 +62,10 @@ class Refinement(nn.Module):
 
 
 class LightStereo(nn.Module):
-    def __init__(self, cfgs):
+    def __init__(self, max_disp, aggregation_blocks, expanse_ratio, left_att=True):
         super().__init__()
-        self.max_disp = cfgs.MAX_DISP
-        self.left_att = cfgs.LEFT_ATT
+        self.max_disp = max_disp
+        self.left_att = left_att
 
         # backbobe
         self.backbone = Backbone()
@@ -73,8 +73,8 @@ class LightStereo(nn.Module):
         # aggregation
         self.cost_agg = Aggregation(in_channels=48,
                                     left_att=self.left_att,
-                                    blocks=cfgs.AGGREGATION_BLOCKS,
-                                    expanse_ratio=cfgs.EXPANSE_RATIO)
+                                    blocks=aggregation_blocks,
+                                    expanse_ratio=expanse_ratio)
 
         # disp refine
         self.refine_1 = nn.Sequential(

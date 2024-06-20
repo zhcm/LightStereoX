@@ -15,6 +15,8 @@ sys.path.insert(0, './')
 from stereo.utils import common_utils
 from trainer import Trainer
 
+from stereo.config.lazy import LazyConfig
+
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
@@ -32,64 +34,64 @@ def parse_config():
     args = parser.parse_args()
     yaml_config = common_utils.config_loader(args.cfg_file)
     cfgs = EasyDict(yaml_config)
-
-    dataset_names = [x.DATASET for x in cfgs.DATA_CONFIG.DATA_INFOS]
-    unique_dataset_names = list(set(dataset_names))
-    if len(unique_dataset_names) == 1:
-        exp_dataset_dir = unique_dataset_names[0]
-    else:
-        exp_dataset_dir = 'MultiDataset'
-    args.exp_group_path = os.path.join(exp_dataset_dir, cfgs.MODEL.NAME)
-    args.tag = os.path.basename(args.cfg_file)[:-5]
-
     args.run_mode = 'train'
     return args, cfgs
 
 
 def main():
+    cfg = LazyConfig.load('cfgs/lightstereo/lightstereo_s_sceneflow.py')
     args, cfgs = parse_config()
     if args.dist_mode:
         dist.init_process_group(backend='nccl')
         local_rank = int(os.environ["LOCAL_RANK"])  # The local rank.
         global_rank = int(os.environ["RANK"])  # The global rank.
-        group_rank = int(os.environ["GROUP_RANK"])  # The rank of the worker group. A number between 0 and max_nnodes.
     else:
         local_rank = 0
         global_rank = 0
-        group_rank = 0
 
     # env
     torch.cuda.set_device(local_rank)
-    if args.fix_random_seed:
+    if cfg.train_params.fix_random_seed:
         seed = 0 if not args.dist_mode else dist.get_rank()
         common_utils.set_random_seed(seed=seed)
 
     # savedir
-    args.output_dir = str(os.path.join(args.save_root_dir, args.exp_group_path, args.tag, args.extra_tag))
-    if os.path.exists(args.output_dir) and args.extra_tag != 'debug' and cfgs.MODEL.CKPT == -1:
+    output_dir = str(os.path.join(cfg.train_params.save_root_dir, args.extra_tag))
+    if os.path.exists(output_dir) and args.extra_tag != 'debug' and cfg.train_params.resume_from_ckpt == -1:
         raise Exception('There is already an exp with this name')
     if args.dist_mode:
         dist.barrier()
-    args.ckpt_dir = os.path.join(args.output_dir, 'ckpt')
-    if not os.path.exists(args.ckpt_dir) and local_rank == 0:
-        os.makedirs(args.ckpt_dir, exist_ok=True)
+    args.ckpt_dir = os.path.join(output_dir, 'ckpt')
     if global_rank == 0:
-        common_utils.backup_source_code(os.path.join(args.output_dir, 'code'))
+        os.makedirs(args.ckpt_dir, exist_ok=True)
+        common_utils.backup_source_code(os.path.join(output_dir, 'code'))
+        os.system('cp %s %s' % (args.cfg_file, output_dir))
     if args.dist_mode:
         dist.barrier()
 
     # logger
-    log_file = os.path.join(args.output_dir, 'train_{}_{}.log'.format(datetime.datetime.now().strftime('%Y%m%d-%H%M%S'), group_rank))
-    logger = common_utils.create_logger(log_file, rank=local_rank)
-    tb_writer = SummaryWriter(log_dir=os.path.join(args.output_dir, 'tensorboard')) if global_rank == 0 else None
-    for key, val in vars(args).items():
-        logger.info('{:16} {}'.format(key, val))
-    common_utils.log_configs(cfgs, logger=logger)
     if global_rank == 0:
-        os.system('cp %s %s' % (args.cfg_file, args.output_dir))
+        now = datetime.datetime.now()
+        timestamp = now.timestamp()
+    else:
+        timestamp = 0.0
+    timestamp_tensor = torch.tensor([timestamp], dtype=torch.float64).cuda()
+    if args.dist_mode:
+        dist.broadcast(timestamp_tensor, src=0)
+    shared_time = datetime.datetime.fromtimestamp(timestamp_tensor.item()).strftime('%Y%m%d-%H%M%S')
+    log_file = os.path.join(output_dir, 'train_{}.log'.format(shared_time))
+    if global_rank == 0:
+        open(log_file, "w").close()
+    if args.dist_mode:
+        dist.barrier()
+    logger = common_utils.create_logger(log_file, rank=global_rank)
+    # tensorboard
+    tb_writer = SummaryWriter(log_dir=os.path.join(output_dir, 'tensorboard')) if global_rank == 0 else None
 
     # trainer
-    model_trainer = Trainer(args, cfgs, local_rank, global_rank, logger, tb_writer)
+    args.local_rank = local_rank
+    args.global_rank = global_rank
+    model_trainer = Trainer(args, cfgs, local_rank, global_rank, logger, tb_writer, cfg)
 
     tbar = tqdm.trange(model_trainer.last_epoch + 1, model_trainer.total_epochs,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),

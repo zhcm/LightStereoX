@@ -21,28 +21,33 @@ def config_loader(path):
     return src_cfgs
 
 
-def set_random_seed(seed):
+def set_random_seed(seed, deterministic=True):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
 
 
-def create_logger(log_file=None, rank=0, log_level=logging.INFO):
+def create_logger(log_file=None, rank=0):
     logger = logging.getLogger(__name__)
-    logger.setLevel(log_level if rank == 0 else 'ERROR')
+    logger.setLevel(logging.INFO if rank == 0 else logging.ERROR)
     formatter = logging.Formatter('%(asctime)s  %(levelname)5s  %(message)s')
+
     console = logging.StreamHandler()
-    console.setLevel(log_level if rank == 0 else 'ERROR')
+    console.setLevel(logging.INFO if rank == 0 else logging.ERROR)
     console.setFormatter(formatter)
     logger.addHandler(console)
+
     if log_file is not None:
         file_handler = logging.FileHandler(filename=log_file)
-        file_handler.setLevel(log_level if rank == 0 else 'ERROR')
+        file_handler.setLevel(logging.INFO if rank == 0 else logging.ERROR)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
     logger.propagate = False
     return logger
 

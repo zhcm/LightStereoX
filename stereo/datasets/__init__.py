@@ -61,3 +61,22 @@ def build_dataloader(data_cfg, batch_size, is_dist, workers, pin_memory, mode):
         drop_last=False
     )
     return dataset, loader, sampler
+
+
+def build_dataloader_lazy(all_dataset, batch_size, is_dist, workers, pin_memory, shuffle):
+    dataset = torch.utils.data.ConcatDataset(all_dataset)
+
+    if is_dist:
+        sampler = DistributedSampler(dataset, shuffle=shuffle)
+    else:
+        sampler = RandomSampler(dataset) if shuffle else SequentialSampler(dataset)
+
+    loader = DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
+        sampler=sampler,
+        num_workers=workers,
+        pin_memory=pin_memory,
+        drop_last=False
+    )
+    return dataset, loader, sampler

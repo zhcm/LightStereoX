@@ -9,7 +9,7 @@ import torch.distributed as dist
 
 from functools import partial
 from stereo.datasets import build_dataloader
-from stereo.modeling import build_network
+from stereo.config.instantiate import instantiate
 from stereo.utils import common_utils
 from stereo.utils.common_utils import color_map_tensorboard, write_tensorboard
 from stereo.utils.warmup import LinearWarmup
@@ -19,13 +19,14 @@ from stereo.evaluation.metric_per_image import epe_metric, d1_metric, threshold_
 
 
 class Trainer:
-    def __init__(self, args, cfgs, local_rank, global_rank, logger, tb_writer):
+    def __init__(self, args, cfgs, local_rank, global_rank, logger, tb_writer, cfg):
         self.args = args
         self.cfgs = cfgs
         self.local_rank = local_rank
         self.global_rank = global_rank
         self.logger = logger
         self.tb_writer = tb_writer
+        self.cfg = cfg
 
         self.model = self.build_model()
 
@@ -38,10 +39,19 @@ class Trainer:
             self.total_epochs = cfgs.OPTIMIZATION.NUM_EPOCHS
             self.last_epoch = -1
 
-            self.optimizer, self.scheduler = self.build_optimizer_and_scheduler()
-            self.scaler = torch.cuda.amp.GradScaler(enabled=cfgs.OPTIMIZATION.AMP)
+            # optimizer
+            cfg.optimizer.params.model = self.model
+            self.optimizer = instantiate(self.cfg.optimizer)
 
-            if self.cfgs.MODEL.CKPT > -1:
+            # scheduler
+            cfg.scheduler.optimizer = self.optimizer
+            if 'total_steps' in self.cfg.scheduler:
+                cfg.scheduler.total_steps = cfg.train_params.train_epochs * len(self.train_loader)
+            self.scheduler = instantiate(cfg.scheduler)
+
+            self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.train_params.mixed_precision)
+
+            if cfg.train_params.resume_from_ckpt > -1:
                 self.resume_ckpt()
 
             self.warmup_scheduler = self.build_warmup()
@@ -70,12 +80,12 @@ class Trainer:
         return eval_set, eval_loader, eval_sampler
 
     def build_model(self):
-        model = build_network(model_cfg=self.cfgs.MODEL)
-        if self.cfgs.OPTIMIZATION.get('FREEZE_BN', False):
+        model = instantiate(self.cfg.model)
+        if self.cfg.train_params.freeze_bn:
             model = common_utils.freeze_bn(model)
             self.logger.info('Freeze the batch normalization layers')
 
-        if self.cfgs.OPTIMIZATION.SYNC_BN and self.args.dist_mode:
+        if self.cfg.train_params.use_sync_bn and self.args.dist_mode:
             model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
             self.logger.info('Convert batch norm to sync batch norm')
         model = model.to(self.local_rank)
@@ -83,29 +93,18 @@ class Trainer:
         if self.args.dist_mode:
             model = nn.parallel.DistributedDataParallel(
                 model, device_ids=[self.local_rank], output_device=self.local_rank,
-                find_unused_parameters=self.cfgs.MODEL.FIND_UNUSED_PARAMETERS)
+                find_unused_parameters=self.cfg.train_params.find_unused_parameters)
 
         # load pretrained model
-        if self.cfgs.MODEL.PRETRAINED_MODEL:
-            self.logger.info('Loading parameters from checkpoint %s' % self.cfgs.MODEL.PRETRAINED_MODEL)
-            if not os.path.isfile(self.cfgs.MODEL.PRETRAINED_MODEL):
+        pretrained_model = self.cfg.train_params.pretrained_model
+        if pretrained_model:
+            self.logger.info('Loading parameters from checkpoint %s' % pretrained_model)
+            if not os.path.isfile(pretrained_model):
                 raise FileNotFoundError
             common_utils.load_params_from_file(
-                model, self.cfgs.MODEL.PRETRAINED_MODEL, device='cuda:%d' % self.local_rank,
+                model, pretrained_model, device='cuda:%d' % self.local_rank,
                 dist_mode=self.args.dist_mode, logger=self.logger, strict=False)
         return model
-
-    def build_optimizer_and_scheduler(self):
-        optimizer_cls = getattr(torch.optim, self.cfgs.OPTIMIZATION.OPTIMIZER.NAME)
-        valid_arg = common_utils.get_valid_args(optimizer_cls, self.cfgs.OPTIMIZATION.OPTIMIZER, ['name'])
-        optimizer = optimizer_cls(params=[p for p in self.model.parameters() if p.requires_grad], **valid_arg)
-
-        self.cfgs.OPTIMIZATION.SCHEDULER.TOTAL_STEPS = self.total_epochs * len(self.train_loader)
-        scheduler_cls = getattr(torch.optim.lr_scheduler, self.cfgs.OPTIMIZATION.SCHEDULER.NAME)
-        valid_arg = common_utils.get_valid_args(scheduler_cls, self.cfgs.OPTIMIZATION.SCHEDULER, ['name', 'on_epoch'])
-        scheduler = scheduler_cls(optimizer, **valid_arg)
-
-        return optimizer, scheduler
 
     def resume_ckpt(self):
         self.logger.info('Resume from ckpt:%d' % self.cfgs.MODEL.CKPT)
