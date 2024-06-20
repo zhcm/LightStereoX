@@ -1,30 +1,28 @@
 # @Time    : 2024/1/20 03:13
 # @Author  : zhangchenming
 import os
+import shutil
 import time
 import glob
 import torch
 import torch.nn as nn
 import torch.distributed as dist
 
-from functools import partial
-from stereo.datasets import build_dataloader
 from stereo.config.instantiate import instantiate
 from stereo.utils import common_utils
-from stereo.utils.common_utils import color_map_tensorboard, write_tensorboard
-
-from stereo.evaluation.metric_per_image import epe_metric, d1_metric, threshold_metric
+from stereo.utils.common_utils import write_tensorboard
+from stereo.evaluation import metric_names, metric_funcs
 
 
 class Trainer:
-    def __init__(self, args, cfgs, local_rank, global_rank, logger, tb_writer, cfg):
+    def __init__(self, args, cfg, logger, tb_writer):
         self.args = args
-        self.cfgs = cfgs
-        self.local_rank = local_rank
-        self.global_rank = global_rank
+        self.cfg = cfg
+        self.local_rank = args.local_rank
+        self.global_rank = args.global_rank
         self.logger = logger
         self.tb_writer = tb_writer
-        self.cfg = cfg
+
         self.model = self.build_model()
 
         if self.args.run_mode in ['train', 'eval']:
@@ -116,15 +114,17 @@ class Trainer:
             dist.barrier()
 
     def save_ckpt(self, current_epoch):
-        if (current_epoch % self.cfgs.TRAINER.CKPT_SAVE_INTERVAL == 0 or current_epoch == self.total_epochs - 1) and self.global_rank == 0:
-            ckpt_list = glob.glob(os.path.join(self.args.ckpt_dir, 'checkpoint_epoch_*.pth'))
+        if self.global_rank == 0:
+            ckpt_list = glob.glob(os.path.join(self.args.ckpt_dir, 'epoch_*'))
             ckpt_list.sort(key=os.path.getmtime)
-            if len(ckpt_list) >= self.cfgs.TRAINER.MAX_CKPT_SAVE_NUM:
-                for cur_file_idx in range(0, len(ckpt_list) - self.cfgs.TRAINER.MAX_CKPT_SAVE_NUM + 1):
-                    os.remove(ckpt_list[cur_file_idx])
-            ckpt_name = os.path.join(self.args.ckpt_dir, 'checkpoint_epoch_%d.pth' % current_epoch)
+            if len(ckpt_list) >= self.cfg.train_params.max_ckpt_save_num:
+                for cur_file_idx in range(0, len(ckpt_list) - self.cfg.train_params.max_ckpt_save_num + 1):
+                    shutil.rmtree(ckpt_list[cur_file_idx])
+
+            output_dir = os.path.join(self.args.ckpt_dir, 'epoch_%d' % current_epoch)
+            os.makedirs(output_dir, exist_ok=True)
             common_utils.save_checkpoint(self.model, self.optimizer, self.scheduler, self.scaler,
-                                         self.args.dist_mode, current_epoch, filename=ckpt_name)
+                                         self.args.dist_mode, output_dir)
         if self.args.dist_mode:
             dist.barrier()
 
@@ -186,56 +186,37 @@ class Trainer:
 
     @torch.no_grad()
     def eval_one_epoch(self, current_epoch):
-
-        metric_func_dict = {
-            'epe': epe_metric,
-            'd1_all': d1_metric,
-            'thres_1': partial(threshold_metric, threshold=1),
-            'thres_2': partial(threshold_metric, threshold=2),
-            'thres_3': partial(threshold_metric, threshold=3),
-        }
-
-        evaluator_cfgs = self.cfgs.EVALUATOR
         local_rank = self.local_rank
 
         epoch_metrics = {}
-        for k in evaluator_cfgs.METRIC:
-            epoch_metrics[k] = {'indexes': [], 'values': []}
+        for each in metric_names:
+            epoch_metrics[each] = {'indexes': [], 'values': []}
 
         for i, data in enumerate(self.eval_loader):
             for k, v in data.items():
                 data[k] = v.to(local_rank) if torch.is_tensor(v) else v
 
-            with torch.cuda.amp.autocast(enabled=self.cfgs.OPTIMIZATION.AMP):
+            with torch.cuda.amp.autocast(enabled=self.cfg.train_params.mixed_precision):
                 infer_start = time.time()
                 model_pred = self.model(data)
                 infer_time = time.time() - infer_start
 
             disp_pred = model_pred['disp_pred']
             disp_gt = data["disp"]
-            mask = (disp_gt < evaluator_cfgs.MAX_DISP) & (disp_gt > 0.5)
+            mask = (disp_gt < 192) & (disp_gt > 0.5)
             if 'occ_mask' in data:
                 mask = mask & (data['occ_mask'] == 255.0)
 
-            for m in evaluator_cfgs.METRIC:
-                if m not in metric_func_dict:
-                    raise ValueError("Unknown metric: {}".format(m))
-                metric_func = metric_func_dict[m]
+            for each in metric_names:
+                metric_func = metric_funcs[each]
                 res = metric_func(disp_pred.squeeze(1), disp_gt, mask)
-                epoch_metrics[m]['indexes'].extend(data['index'].tolist())
-                epoch_metrics[m]['values'].extend(res.tolist())
+                epoch_metrics[each]['indexes'].extend(data['index'].tolist())
+                epoch_metrics[each]['values'].extend(res.tolist())
 
-            if i % self.cfgs.TRAINER.LOGGER_ITER_INTERVAL == 0:
+            if i % self.cfg.train_params.log_period == 0:
                 message = ('Evaluating Epoch:{:>2d} Iter:{:>4d}/{} InferTime: {:.2f}ms'
                            ).format(current_epoch, i, len(self.eval_loader), infer_time * 1000)
                 self.logger.info(message)
-
-                if self.cfgs.TRAINER.EVAL_VISUALIZATION and self.tb_writer is not None:
-                    tb_info = {
-                        'image/eval/image': torch.cat([data['left'][0], data['right'][0]], dim=1) / 256,
-                        'image/eval/disp': color_map_tensorboard(data['disp'][0], model_pred['disp_pred'].squeeze(1)[0])
-                    }
-                    write_tensorboard(self.tb_writer, tb_info, current_epoch * len(self.eval_loader) + i)
 
         # gather from all gpus
         if self.args.dist_mode:

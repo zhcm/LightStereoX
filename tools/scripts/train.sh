@@ -8,6 +8,7 @@ PY_ARGS=${@:2}
 
 # 环境变量
 export TORCH_HOME='/mnt/nas/algorithm/chenming.zhang/.cache/torch'
+export PYTHONPATH="./:$PYTHONPATH"
 
 # 激活python环境
 set +x
@@ -30,9 +31,4 @@ torchrun \
     --nproc_per_node=8 \
     --rdzv_backend=c10d \
     --rdzv_endpoint=$master_ip:$master_port \
-    tools/train.py \
-        --dist_mode \
-        --fix_random_seed \
-        --save_root_dir '/mnt/nas/algorithm/chenming.zhang/code/LightStereo/output' \
-        --workers 8 \
-        --pin_memory $PY_ARGS
+    tools/train.py --dist_mode $PY_ARGS

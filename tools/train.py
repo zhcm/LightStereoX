@@ -1,50 +1,38 @@
 # @Time    : 2023/8/28 22:18
 # @Author  : zhangchenming
-import sys
 import os
 import argparse
 import datetime
 import tqdm
-from easydict import EasyDict
-
 import torch
 import torch.distributed as dist
+
 from torch.utils.tensorboard import SummaryWriter
-
-sys.path.insert(0, './')
 from stereo.utils import common_utils
-from trainer import Trainer
-
+from stereo.solver.trainer import Trainer
 from stereo.config.lazy import LazyConfig
 
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    # mode
     parser.add_argument('--dist_mode', action='store_true', default=False, help='torchrun ddp multi gpu')
     parser.add_argument('--cfg_file', type=str, default=None, required=True, help='specify the config for training')
-    parser.add_argument('--fix_random_seed', action='store_true', default=False, help='')
-    # save path
-    parser.add_argument('--save_root_dir', type=str, default='./output', help='save root dir for this experiment')
-    parser.add_argument('--extra_tag', type=str, default='default', help='extra tag for this experiment')
-    # dataloader
-    parser.add_argument('--workers', type=int, default=0, help='number of workers for dataloader')
-    parser.add_argument('--pin_memory', action='store_true', default=False, help='data loader pin memory')
+    parser.add_argument('--extra_tag', type=str, default='debug', help='extra tag for this experiment')
 
     args = parser.parse_args()
-    yaml_config = common_utils.config_loader(args.cfg_file)
-    cfgs = EasyDict(yaml_config)
+    cfg = LazyConfig.load(args.cfg_file)
+
     args.run_mode = 'train'
-    return args, cfgs
+    return args, cfg
 
 
 def main():
-    cfg = LazyConfig.load('cfgs/lightstereo/lightstereo_s_sceneflow.py')
-    args, cfgs = parse_config()
+
+    args, cfg = parse_config()
     if args.dist_mode:
         dist.init_process_group(backend='nccl')
-        local_rank = int(os.environ["LOCAL_RANK"])  # The local rank.
-        global_rank = int(os.environ["RANK"])  # The global rank.
+        local_rank = int(os.environ["LOCAL_RANK"])
+        global_rank = int(os.environ["RANK"])
     else:
         local_rank = 0
         global_rank = 0
@@ -91,7 +79,7 @@ def main():
     # trainer
     args.local_rank = local_rank
     args.global_rank = global_rank
-    model_trainer = Trainer(args, cfgs, local_rank, global_rank, logger, tb_writer, cfg)
+    model_trainer = Trainer(args, cfg, logger, tb_writer)
 
     tbar = tqdm.trange(model_trainer.last_epoch + 1, model_trainer.total_epochs,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
@@ -100,7 +88,7 @@ def main():
     for current_epoch in tbar:
         model_trainer.train(current_epoch, tbar)
         model_trainer.save_ckpt(current_epoch)
-        if current_epoch % cfgs.TRAINER.EVAL_INTERVAL == 0 or current_epoch == model_trainer.total_epochs - 1:
+        if current_epoch % cfg.train_params.eval_period == 0 or current_epoch == cfg.train_params.train_epochs - 1:
             model_trainer.evaluate(current_epoch)
 
 

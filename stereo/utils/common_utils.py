@@ -98,7 +98,7 @@ def log_configs(cfgs, pre='cfgs', logger=None):
         logger.info('%s.%s: %s' % (pre, key, val))
 
 
-def save_checkpoint(model, optimizer, scheduler, scaler, is_dist, epoch, filename='checkpoint'):
+def save_checkpoint(model, optimizer, scheduler, scaler, is_dist, output_dir):
     if is_dist:
         model_state = model.module.state_dict()
     else:
@@ -108,12 +108,10 @@ def save_checkpoint(model, optimizer, scheduler, scaler, is_dist, epoch, filenam
     scheduler_state = scheduler.state_dict()
     scaler_state = scaler.state_dict()
 
-    state = {'epoch': epoch,
-             'model_state': model_state,
-             'optimizer_state': optim_state,
-             'scheduler_state': scheduler_state,
-             'scaler_state': scaler_state}
-    torch.save(state, filename)
+    torch.save(model_state, os.path.join(output_dir, 'pytorch_model.bin'))
+    torch.save(optim_state, os.path.join(output_dir, 'optimizer.bin'))
+    torch.save(scheduler_state, os.path.join(output_dir, 'scheduler.bin'))
+    torch.save(scaler_state, os.path.join(output_dir, 'scaler.pt'))
 
 
 def freeze_bn(module):

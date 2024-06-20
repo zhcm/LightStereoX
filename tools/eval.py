@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 sys.path.insert(0, './')
 from stereo.utils import common_utils
-from trainer import Trainer
+from stereo.solver.trainer import Trainer
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
