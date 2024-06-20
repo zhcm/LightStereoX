@@ -1,7 +1,7 @@
 # @Time    : 2024/6/9 18:13
 # @Author  : zhangchenming
 from stereo.config.lazy import LazyCall
-from stereo.datasets_lazy.sceneflow_dataset import SceneFlowDataset
+from stereo.datasets.sceneflow_dataset import SceneFlowDataset
 
 data_root_path = '/mnt/nas/algorithm/chenming.zhang/dataset/SceneFlow'
 

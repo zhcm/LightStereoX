@@ -12,7 +12,7 @@ from stereo.solver.build import get_model_params, ClipGradValue
 from cfgs.common.train_params import train_params
 
 # dataset
-sceneflow = LazyConfig.load('cfgs/common/dataset/sceneflow.py')
+sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736], y_jitter=False),
     LazyCall(stereo_trans.TransposeImage)(),

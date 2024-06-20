@@ -3,7 +3,7 @@
 import os
 import numpy as np
 from PIL import Image
-from stereo.datasets.dataset_utils.readpfm import readpfm
+from .utils.readpfm import readpfm
 from .dataset_template import DatasetTemplate
 
 
