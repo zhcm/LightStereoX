@@ -1,0 +1,64 @@
+DATA_CONFIG:
+    DATA_INFOS:
+        -   DATASET: SceneFlowDataset
+            DATA_SPLIT: {
+                TRAINING: ./data/sceneflow/sceneflow_finalpass_train.txt,
+                EVALUATING: ./data/sceneflow/sceneflow_finalpass_test.txt,
+                TESTING: ./data/sceneflow/sceneflow_finalpass_test.txt
+            }
+            DATA_PATH: /mnt/nas/algorithm/chenming.zhang/dataset/SceneFlow
+            RETURN_RIGHT_DISP: false
+
+    DATA_TRANSFORM:
+        TRAINING:
+            - { NAME: RandomErase, PROB: 0.5, MAX_TIME: 2, BOUNDS: [ 50, 100 ] }
+            - { NAME: RandomCrop, SIZE: [ 320, 736 ], Y_JITTER: false }
+            - { NAME: TransposeImage }
+            - { NAME: ToTensor }
+        EVALUATING:
+            - { NAME: RightTopPad, SIZE: [ 544, 960 ] }
+            - { NAME: TransposeImage }
+            - { NAME: ToTensor }
+
+MODEL:
+    NAME: LightBest
+    MAX_DISP: 192
+    NUM_GROUPS: 8
+    USE_CONCAT_VOLUME: false
+    USE_GWC_VOLUME: true
+    FIND_UNUSED_PARAMETERS: false
+
+OPTIMIZATION:
+    FREEZE_BN: true
+    SYNC_BN: true
+    AMP: true
+    BATCH_SIZE_PER_GPU: 12
+    NUM_EPOCHS: 90
+
+    OPTIMIZER:
+        NAME: AdamW
+        LR: 0.0012
+        WEIGHT_DECAY: 1.0e-05
+        EPS: 1.0e-08
+
+    SCHEDULER:
+        NAME: OneCycleLR
+        ON_EPOCH: False
+        MAX_LR: 0.0012
+        PCT_START: 0.01
+        CYCLE_MOMENTUM: False
+        ANNEAL_STRATEGY: linear
+
+    CLIP_GRAD:
+        TYPE: value
+        CLIP_VALUE: 1.0
+
+EVALUATOR:
+    BATCH_SIZE_PER_GPU: 12
+    MAX_DISP: 192
+    METRIC:
+        - d1_all
+        - epe
+        - thres_1
+        - thres_2
+        - thres_3

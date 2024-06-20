@@ -1,0 +1,80 @@
+DATA_CONFIG:
+    DATA_INFOS:
+        -   DATASET: FlyingThings3DSubsetDataset
+            DATA_SPLIT: {
+                TRAINING: ./data/sceneflow/FlyingThings3D_sttr_train.txt,
+                EVALUATING: ./data/sceneflow/FlyingThings3D_sttr_test.txt,
+                TESTING: ./data/sceneflow/FlyingThings3D_sttr_test.txt
+            }
+            DATA_PATH: /mnt/nas/algorithm/chenming.zhang/dataset/SceneFlow
+            RETURN_OCC_MASK: true
+            ZEROING_OCC: true
+
+    DATA_TRANSFORM:
+        BATCH_UNIFORM: true
+        RANDOM_TYPE: range
+        H_RANGE: [ 1.0, 1.78 ]
+        W_RANGE: [ 1.0, 1.5 ]
+        TRAINING:
+            - { NAME: RandomCrop, SIZE: [ 360, 640 ] }
+            - { NAME: TransposeImage }
+            - { NAME: ToTensor }
+            - { NAME: NormalizeImage, MEAN: [ 0.485, 0.456, 0.406 ], STD: [ 0.229, 0.224, 0.225 ] }
+        EVALUATING:
+            - { NAME: RightTopPad, SIZE: [ 540, 960 ] }
+            - { NAME: TransposeImage }
+            - { NAME: ToTensor }
+            - { NAME: NormalizeImage, MEAN: [ 0.485, 0.456, 0.406 ], STD: [ 0.229, 0.224, 0.225 ] }
+
+MODEL:
+    NAME: STTR
+    DOWNSAMPLE: 3
+    VALIDATION_MAX_DISP: -1
+    PX_ERROR_THRESHOLD: 3
+    CHANNEL_DIM: 128
+    POSITION_ENCODING: sine1d_rel
+    NHEADS: 8
+    NUM_ATTN_LAYERS: 6
+    REGRESSION_HEAD: ot
+    CONTEXT_ADJUSTMENT: true
+    CAL_NUM_BLOCKS: 8
+    CAL_FEAT_DIM: 16
+    CAL_EXPANSION_RATIO: 4
+    FIND_UNUSED_PARAMETERS: false
+
+
+OPTIMIZATION:
+    FREEZE_BN: false
+    SYNC_BN: true
+    AMP: false
+    BATCH_SIZE_PER_GPU: 1
+    NUM_EPOCHS: 10
+
+    OPTIMIZER:
+        NAME: Adam
+        LR: 0.0008
+        BETAS: [ 0.9, 0.999 ]
+        SPECIFIC_LR: { 'regression_head': 0.0016, 'cal': 0.0016 }
+
+    SCHEDULER:
+        NAME: MultiStepLR
+        GAMMA: 0.5
+        MILESTONES: [ 5, 7, 9 ]
+        ON_EPOCH: True
+        WARMUP:
+            WARM_STEPS: 2000
+
+    CLIP_GRAD:
+        TYPE: norm
+        MAX_NORM: 35
+        NORM_TYPE: 2
+
+EVALUATOR:
+    BATCH_SIZE_PER_GPU: 1
+    MAX_DISP: 192
+    METRIC:
+        - d1_all
+        - epe
+        - thres_1
+        - thres_2
+        - thres_3

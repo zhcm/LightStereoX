@@ -1,0 +1,13 @@
+tensorboard
+easydict
+pyyaml
+tqdm
+six
+opencv-python
+timm==0.4.12
+
+# opt_einsum
+# scikit-image
+# mmcv
+# pip install -U openmim
+# mim install mmcv-full==1.7.1
