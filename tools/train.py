@@ -27,8 +27,9 @@ def parse_config():
 
 
 def main():
-
     args, cfg = parse_config()
+
+    # dist.get_rank() == int(os.environ["RANK"]) == global_rank
     if args.dist_mode:
         dist.init_process_group(backend='nccl')
         local_rank = int(os.environ["LOCAL_RANK"])
@@ -49,9 +50,9 @@ def main():
         raise Exception('There is already an exp with this name')
     if args.dist_mode:
         dist.barrier()
-    args.ckpt_dir = os.path.join(output_dir, 'ckpt')
+    ckpt_dir = os.path.join(output_dir, 'ckpt')
     if global_rank == 0:
-        os.makedirs(args.ckpt_dir, exist_ok=True)
+        os.makedirs(ckpt_dir, exist_ok=True)
         common_utils.backup_source_code(os.path.join(output_dir, 'code'))
         os.system('cp %s %s' % (args.cfg_file, output_dir))
     if args.dist_mode:
@@ -73,12 +74,20 @@ def main():
     if args.dist_mode:
         dist.barrier()
     logger = common_utils.create_logger(log_file, rank=global_rank)
+
     # tensorboard
     tb_writer = SummaryWriter(log_dir=os.path.join(output_dir, 'tensorboard')) if global_rank == 0 else None
+
+    # log
+    logger.info("Command line arguments: " + str(args))
+    with open(args.cfg_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    logger.info("Contents of args.config_file={}:\n{}".format(args.cfg_file, content))
 
     # trainer
     args.local_rank = local_rank
     args.global_rank = global_rank
+    args.ckpt_dir = ckpt_dir
     model_trainer = Trainer(args, cfg, logger, tb_writer)
 
     tbar = tqdm.trange(model_trainer.last_epoch + 1, model_trainer.total_epochs,
