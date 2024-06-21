@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 
 class Aggregation(nn.Module):
-    def __init__(self, in_channels, left_att, blocks, expanse_ratio):
+    def __init__(self, in_channels, left_att, blocks, expanse_ratio, backbone_dims):
         super(Aggregation, self).__init__()
 
         self.left_att = left_att
@@ -37,9 +37,9 @@ class Aggregation(nn.Module):
         self.redir2 = MobileV2Residual(in_channels * 2, in_channels * 2, stride=1, expanse_ratio=self.expanse_ratio)
 
         if self.left_att:
-            self.att0 = AttentionModule(in_channels, 24)
-            self.att2 = AttentionModule(in_channels * 2, 32)
-            self.att4 = AttentionModule(in_channels * 4, 96)
+            self.att0 = AttentionModule(in_channels, backbone_dims[0])
+            self.att2 = AttentionModule(in_channels * 2, backbone_dims[1])
+            self.att4 = AttentionModule(in_channels * 4, backbone_dims[2])
 
     def forward(self, x, features_left):
         x = self.conv0(x)

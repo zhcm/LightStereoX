@@ -31,8 +31,7 @@ class Backbone(nn.Module):
         super().__init__()
         model = timm.create_model('mobilenetv2_100', pretrained=True, features_only=True)
         channels = [160, 96, 32, 24]
-        # model = timm.create_model('mobilenetv3_large_100', pretrained=True, features_only=True)
-        # channels = [160, 112, 40, 24]
+
         # model = timm.create_model('efficientnetv2_rw_s', pretrained=True, features_only=True)
         # channels = [272, 160, 64, 48]
 
@@ -67,3 +66,8 @@ class Backbone(nn.Module):
         p2 = self.out_conv(p2)
 
         return [p2, p3, p4, c5]
+
+    @property
+    def out_dims(self):
+        return [24, 32, 96, 160]
+        # return [48, 64, 160, 272]

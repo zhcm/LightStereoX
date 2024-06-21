@@ -18,16 +18,18 @@ class LightStereo(nn.Module):
 
         # backbobe
         self.backbone = Backbone()
+        backbone_dims = self.backbone.out_dims
 
         # aggregation
         self.cost_agg = Aggregation(in_channels=48,
                                     left_att=self.left_att,
                                     blocks=aggregation_blocks,
-                                    expanse_ratio=expanse_ratio)
+                                    expanse_ratio=expanse_ratio,
+                                    backbone_dims=backbone_dims)
 
         # disp refine
         self.refine_1 = nn.Sequential(
-            BasicConv2d(24, 24, kernel_size=3, stride=1, padding=1,
+            BasicConv2d(backbone_dims[0], 24, kernel_size=3, stride=1, padding=1,
                         norm_layer=nn.InstanceNorm2d, act_layer=nn.LeakyReLU),
             BasicConv2d(24, 24, kernel_size=3, stride=1, padding=1,
                         norm_layer=nn.InstanceNorm2d, act_layer=nn.ReLU))
