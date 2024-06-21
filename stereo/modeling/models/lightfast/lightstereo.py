@@ -1,14 +1,12 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from functools import partial
+
 from stereo.modeling.common.basic_block_2d import BasicConv2d, BasicDeconv2d
 from stereo.modeling.common.cost_volume import correlation_volume
 from stereo.modeling.common.disp_regression import disparity_regression
-from stereo.modeling.common.refinement import context_upsample, BasicBlock
+from stereo.modeling.common.refinement import context_upsample
 
 from .backbone import Backbone, FPNLayer
-
 from .aggregation import Aggregation
 
 
