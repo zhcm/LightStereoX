@@ -7,14 +7,14 @@ data_root_path = '/mnt/nas/algorithm/chenming.zhang/dataset/SceneFlow'
 
 train = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
-    split_file='./data/sceneflow/sceneflow_finalpass_train.txt',
+    split_file='./data/SceneFlow/sceneflow_finalpass_train.txt',
     augmentations=None,
     return_right_disp=False
 )
 
 val = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
-    split_file='./data/sceneflow/sceneflow_finalpass_test.txt',
+    split_file='./data/SceneFlow/sceneflow_finalpass_test.txt',
     augmentations=None,
     return_right_disp=False
 )

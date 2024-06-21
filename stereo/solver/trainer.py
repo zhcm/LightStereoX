@@ -52,8 +52,8 @@ class Trainer:
             self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.train_params.mixed_precision)
 
             # resume
-            # if cfg.train_params.resume_from_ckpt > -1:
-            #     self.resume_ckpt()
+            if cfg.train_params.resume_from_ckpt > -1:
+                self.resume_ckpt()
 
             # clip grad
             if 'clip_grad' in cfg:
@@ -85,18 +85,27 @@ class Trainer:
             self.logger.info('Convert model to DistributedDataParallel')
         return model
 
-    # def resume_ckpt(self):
-    #     self.logger.info('Resume from ckpt:%d' % self.cfgs.MODEL.CKPT)
-    #     ckpt_path = str(os.path.join(self.args.ckpt_dir, 'checkpoint_epoch_%d.pth' % self.cfgs.MODEL.CKPT))
-    #     checkpoint = torch.load(ckpt_path, map_location='cuda:%d' % self.local_rank)
-    #     self.last_epoch = checkpoint['epoch']
-    #     self.scheduler.load_state_dict(checkpoint['scheduler_state'])
-    #     self.optimizer.load_state_dict(checkpoint['optimizer_state'])
-    #     self.scaler.load_state_dict(checkpoint['scaler_state'])
-    #     if self.args.dist_mode:
-    #         self.model.module.load_state_dict(checkpoint['model_state'])
-    #     else:
-    #         self.model.load_state_dict(checkpoint['model_state'])
+    def resume_ckpt(self):
+        self.logger.info('Resume from ckpt:%d' % self.cfg.train_params.resume_from_ckpt)
+        self.last_epoch = self.cfg.train_params.resume_from_ckpt
+        checkpoint_dir = str(os.path.join(self.args.ckpt_dir, 'epoch_%d' % self.cfg.train_params.resume_from_ckpt))
+
+        model_state = torch.load(os.path.join(checkpoint_dir, 'pytorch_model.bin'),
+                                 map_location='cuda:%d' % self.local_rank)
+        optim_state = torch.load(os.path.join(checkpoint_dir, 'optimizer.bin'),
+                                 map_location='cuda:%d' % self.local_rank)
+        scheduler_state = torch.load(os.path.join(checkpoint_dir, 'scheduler.bin'),
+                                     map_location='cuda:%d' % self.local_rank)
+        scaler_state = torch.load(os.path.join(checkpoint_dir, 'scaler.pt'),
+                                  map_location='cuda:%d' % self.local_rank)
+
+        self.scheduler.load_state_dict(scheduler_state)
+        self.optimizer.load_state_dict(optim_state)
+        self.scaler.load_state_dict(scaler_state)
+        if self.args.dist_mode:
+            self.model.module.load_state_dict(model_state)
+        else:
+            self.model.load_state_dict(model_state)
 
     def train(self, current_epoch, tbar):
         self.model.train()
