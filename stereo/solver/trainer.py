@@ -138,6 +138,8 @@ class Trainer:
 
         train_loader_iter = iter(self.train_loader)
         for i in range(0, len(self.train_loader)):
+            # zero grad
+            self.optimizer.zero_grad()
             lr = self.optimizer.param_groups[0]['lr']
 
             start_timer = time.time()
@@ -162,8 +164,6 @@ class Trainer:
             self.scaler.step(self.optimizer)
             # Updates the scale for next iteration.
             self.scaler.update()
-            # zero grad
-            self.optimizer.zero_grad()
             # scheduler
             if 'total_steps' in self.cfg.scheduler:
                 self.scheduler.step()
@@ -177,11 +177,11 @@ class Trainer:
             if total_iter % self.cfg.train_params.log_period == 0:
                 message = ('Training Epoch:{:>2d}/{} Iter:{:>4d}/{} '
                            'Loss:{:#.6g}({:#.6g}) LR:{:.4e} '
-                           'DataTime:{:.2f} InferTime:{:.2f}ms '
+                           'DataTime:{:.2f}ms InferTime:{:.2f}ms '
                            'Time cost: {}/{}'
                            ).format(current_epoch, total_epochs, i, len(self.train_loader),
                                     loss.item(), total_loss / (i + 1), lr,
-                                    data_timer - start_timer, (infer_timer - data_timer) * 1000,
+                                    (data_timer - start_timer) * 1000, (infer_timer - data_timer) * 1000,
                                     tbar.format_interval(trained_time_past_all),
                                     tbar.format_interval(remaining_second_all))
                 self.logger.info(message)
@@ -192,9 +192,10 @@ class Trainer:
 
     @torch.no_grad()
     def eval_one_epoch(self, current_epoch):
-        epoch_metrics = {}
+        all_indexes = []
+        all_metrics = {}
         for each in metric_names:
-            epoch_metrics[each] = {'indexes': [], 'values': []}
+            all_metrics[each] = []
 
         for i, data in enumerate(self.val_loader):
             for k, v in data.items():
@@ -211,44 +212,50 @@ class Trainer:
             if 'occ_mask' in data:
                 mask = mask & (data['occ_mask'] == 255.0)
 
+            all_indexes.append(data['index'])
             for each in metric_names:
                 metric_func = metric_funcs[each]
                 res = metric_func(disp_pred.squeeze(1), disp_gt, mask)
-                epoch_metrics[each]['indexes'].extend(data['index'].tolist())
-                epoch_metrics[each]['values'].extend(res.tolist())
+                all_metrics[each].append(res)
 
             if i % self.cfg.train_params.log_period == 0:
                 message = ('Evaluating Epoch:{:>2d} Iter:{:>4d}/{} InferTime: {:.2f}ms'
                            ).format(current_epoch, i, len(self.val_loader), infer_time * 1000)
                 self.logger.info(message)
 
+        # current gpu
+        all_indexes = torch.cat(all_indexes)
+        for each in metric_names:
+            all_metrics[each] = torch.cat(all_metrics[each])
+
         # gather from all gpus
         if self.args.dist_mode:
             dist.barrier()
             self.logger.info("Start reduce metrics.")
-            for k in epoch_metrics.keys():
-                indexes = torch.tensor(epoch_metrics[k]["indexes"]).to(self.local_rank)
-                values = torch.tensor(epoch_metrics[k]["values"]).to(self.local_rank)
-                gathered_indexes = [torch.zeros_like(indexes) for _ in range(dist.get_world_size())]
-                gathered_values = [torch.zeros_like(values) for _ in range(dist.get_world_size())]
-                dist.all_gather(gathered_indexes, indexes)
-                dist.all_gather(gathered_values, values)
+            # gather index
+            gathered_indexes = [torch.zeros_like(all_indexes) for _ in range(dist.get_world_size())]
+            dist.all_gather(gathered_indexes, all_indexes)
+            all_indexes = torch.cat(gathered_indexes)
+            # gather metrics
+            for each in metric_names:
+                gathered_metric = [torch.zeros_like(all_metrics[each]) for _ in range(dist.get_world_size())]
+                dist.all_gather(gathered_metric, all_metrics[each])
+                all_metrics[each] = torch.cat(gathered_metric)
+
                 unique_dict = {}
-                for key, value in zip(torch.cat(gathered_indexes, dim=0).tolist(),
-                                      torch.cat(gathered_values, dim=0).tolist()):
+                for key, value in zip(all_indexes.tolist(), all_metrics[each]):
                     if key not in unique_dict:
                         unique_dict[key] = value
-                epoch_metrics[k]["indexes"] = list(unique_dict.keys())
-                epoch_metrics[k]["values"] = list(unique_dict.values())
+                all_metrics[each] = torch.stack(list(unique_dict.values()))
 
         results = {}
         for each in metric_names:
-            results[each] = torch.tensor(epoch_metrics[each]["values"]).mean()
+            results[each] = round(all_metrics[each].mean().item(), 4)
 
         if self.global_rank == 0 and self.tb_writer is not None:
             tb_info = {}
             for k, v in results.items():
-                tb_info[f'scalar/val/{k}'] = v.item()
+                tb_info[f'scalar/val/{k}'] = v
             common_utils.write_tensorboard(self.tb_writer, tb_info, current_epoch)
 
         self.logger.info(f"Epoch {current_epoch} metrics: {results}")

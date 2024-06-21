@@ -12,6 +12,7 @@ from stereo.solver.build import get_model_params, ClipGradValue
 from cfgs.common.train_params import train_params
 from cfgs.common.constants import constants
 
+
 # dataset
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = [
@@ -24,6 +25,7 @@ sceneflow.val.augmentations = [
 ]
 
 # dataloader
+batch_size_per_gpu = 24
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.train],
@@ -48,7 +50,7 @@ model = LazyCall(LightStereo)(
     left_att=True)
 
 # optim
-lr = 0.0001 * 24
+lr = 0.0001 * batch_size_per_gpu
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -71,4 +73,3 @@ train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStere
                               'SceneFlowDataset/LightStereo_S')
 train_params.train_epochs = 90
 train_params.mixed_precision = True
-train_params.max_ckpt_save_num = 2
