@@ -12,11 +12,11 @@ class FPNLayer(nn.Module):
     def __init__(self, chan_low, chan_high):
         super().__init__()
         self.deconv = BasicDeconv2d(chan_low, chan_high, kernel_size=4, stride=2, padding=1,
-                                     norm_layer=nn.BatchNorm2d,
-                                     act_layer=partial(nn.LeakyReLU, negative_slope=0.2, inplace=True))
+                                    norm_layer=nn.BatchNorm2d,
+                                    act_layer=partial(nn.LeakyReLU, negative_slope=0.2, inplace=True))
 
         self.conv = BasicConv2d(chan_high * 2, chan_high, kernel_size=3, padding=1,
-                                 norm_layer=nn.BatchNorm2d,
+                                norm_layer=nn.BatchNorm2d,
                                 act_layer=partial(nn.LeakyReLU, negative_slope=0.2, inplace=True))
 
     def forward(self, low, high):

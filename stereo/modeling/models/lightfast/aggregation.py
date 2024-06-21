@@ -1,11 +1,7 @@
 # @Time    : 2024/3/11 11:29
 # @Author  : zhangchenming
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from functools import partial
-from stereo.modeling.common.basic_block_2d import BasicConv2d
 
 
 class Aggregation(nn.Module):
@@ -44,7 +40,6 @@ class Aggregation(nn.Module):
             self.att0 = AttentionModule(in_channels, 24)
             self.att2 = AttentionModule(in_channels * 2, 32)
             self.att4 = AttentionModule(in_channels * 4, 96)
-
 
     def forward(self, x, features_left):
         x = self.conv0(x)
