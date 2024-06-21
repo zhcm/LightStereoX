@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from functools import partial
-from stereo.modeling.common.basic_block_2d import BasicConv2d, BasicDeconv2d
+from .basic_block_2d import BasicConv2d, BasicDeconv2d
 
 
 class FPNLayer(nn.Module):
