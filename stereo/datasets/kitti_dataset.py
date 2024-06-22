@@ -40,3 +40,25 @@ class KittiDataset(DatasetTemplate):
         sample['name'] = left_img_path
 
         return sample
+
+
+class KittiTestDataset(DatasetTemplate):
+    def __init__(self, data_root_path, split_file, augmentations):
+        super().__init__(data_root_path, split_file, augmentations)
+
+    def __getitem__(self, idx):
+        item = self.data_list[idx]
+        full_paths = [os.path.join(self.root, x) for x in item]
+        left_img_path, right_img_path = full_paths[:2]
+        left_img = np.array(Image.open(left_img_path).convert('RGB'), dtype=np.float32)
+        right_img = np.array(Image.open(right_img_path).convert('RGB'), dtype=np.float32)
+        sample = {
+            'left': left_img,
+            'right': right_img,
+            'name': left_img_path.split('/')[-1],
+        }
+
+        for t in self.augmentations:
+            sample = t(sample)
+
+        return sample

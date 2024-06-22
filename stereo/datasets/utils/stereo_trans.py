@@ -29,6 +29,22 @@ class RandomCrop(object):
         return sample
 
 
+class ConstantCrop(object):
+    def __init__(self, crop_size, mode='tl'):
+        self.size = crop_size
+        self.mode = 'tl'
+
+    def __call__(self, sample):
+        h, w = sample['left'].shape[:2]
+        crop_h, crop_w = self.size
+        crop_h = min(h, crop_h)
+        crop_w = min(w, crop_w)
+
+        for k in sample.keys():
+            sample[k] = sample[k][h - crop_h:, w - crop_w:]
+        return sample
+
+
 class NormalizeImage(object):
     def __init__(self, mean, std):
         self.mean = np.array(mean, dtype=np.float32)
@@ -78,5 +94,65 @@ class ConstantPad(object):
                 sample[k] = np.pad(sample[k], pad_width, 'constant', constant_values=0)
 
         sample['pad'] = np.array([pad_top, pad_right, pad_bottom, pad_left])
+
+        return sample
+
+
+class DivisiblePad(object):
+    def __init__(self, divisor, mode='tr'):
+        self.divisor = divisor
+        self.mode = mode
+
+    def __call__(self, sample):
+        h, w = sample['left'].shape[:2]
+        if h % self.divisor != 0:
+            pad_h = self.divisor - h % self.divisor
+        else:
+            pad_h = 0
+        if w % self.divisor != 0:
+            pad_w = self.divisor - w % self.divisor
+        else:
+            pad_w = 0
+
+        if self.mode == 'round':
+            pad_top = pad_h // 2
+            pad_right = pad_w // 2
+            pad_bottom = pad_h - (pad_h // 2)
+            pad_left = pad_w - (pad_w // 2)
+        elif self.mode == 'tr':
+            pad_top = pad_h
+            pad_right = pad_w
+            pad_bottom = 0
+            pad_left = 0
+        else:
+            raise Exception('no DivisiblePad mode')
+
+        # apply pad for left, right, disp image, and occ mask
+        for k in sample.keys():
+            if k in ['left', 'right']:
+                pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
+                sample[k] = np.pad(sample[k], pad_width, 'edge')
+
+            elif k in ['disp', 'disp_right', 'occ_mask', 'occ_mask_right']:
+                pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right]])
+                sample[k] = np.pad(sample[k], pad_width, 'constant', constant_values=0)
+
+        sample['pad'] = np.array([pad_top, pad_right, pad_bottom, pad_left])
+        return sample
+
+
+class CropOrPad(object):
+    def __init__(self, size):
+        self.size = size
+        self.crop_fn = ConstantCrop(crop_size=size, mode='tl')
+        self.pad_fn = ConstantPad(target_size=size, mode='tr')
+
+    def __call__(self, sample):
+        h, w = sample['left'].shape[:2]
+        th, tw = self.size
+        if th > h or tw > w:
+            sample = self.pad_fn(sample)
+        else:
+            sample = self.crop_fn(sample)
 
         return sample

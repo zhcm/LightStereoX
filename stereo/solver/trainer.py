@@ -221,45 +221,42 @@ class Trainer:
             if 'occ_mask' in data:
                 mask = mask & (data['occ_mask'] == 255.0)
 
-            all_indexes.append(data['index'])
+            all_indexes.extend(data['index'].tolist())
             for each in metric_names:
                 metric_func = metric_funcs[each]
                 res = metric_func(disp_pred.squeeze(1), disp_gt, mask)
-                all_metrics[each].append(res)
+                all_metrics[each].extend(res.tolist())
 
             if i % self.cfg.train_params.log_period == 0:
                 message = ('Evaluating Epoch:{:>2d} Iter:{:>4d}/{} InferTime: {:.2f}ms'
                            ).format(current_epoch, i, len(self.val_loader), infer_time * 1000)
                 self.logger.info(message)
 
-        # current gpu
-        all_indexes = torch.cat(all_indexes)
-        for each in metric_names:
-            all_metrics[each] = torch.cat(all_metrics[each])
-
         # gather from all gpus
         if self.args.dist_mode:
             dist.barrier()
             self.logger.info("Start reduce metrics.")
             # gather index
-            gathered_indexes = [torch.zeros_like(all_indexes) for _ in range(dist.get_world_size())]
-            dist.all_gather(gathered_indexes, all_indexes)
-            all_indexes = torch.cat(gathered_indexes)
+            indexes = torch.tensor(all_indexes).to(self.local_rank)
+            gathered_indexes = [torch.zeros_like(indexes) for _ in range(dist.get_world_size())]
+            dist.all_gather(gathered_indexes, indexes)
+            indexes = torch.cat(gathered_indexes)
             # gather metrics
             for each in metric_names:
-                gathered_metric = [torch.zeros_like(all_metrics[each]) for _ in range(dist.get_world_size())]
-                dist.all_gather(gathered_metric, all_metrics[each])
-                all_metrics[each] = torch.cat(gathered_metric)
+                metric = torch.tensor(all_metrics[each]).to(self.local_rank)
+                gathered_metric = [torch.zeros_like(metric) for _ in range(dist.get_world_size())]
+                dist.all_gather(gathered_metric, metric)
+                metric = torch.cat(gathered_metric)
 
                 unique_dict = {}
-                for key, value in zip(all_indexes.tolist(), all_metrics[each]):
+                for key, value in zip(indexes.tolist(), metric.tolist()):
                     if key not in unique_dict:
                         unique_dict[key] = value
-                all_metrics[each] = torch.stack(list(unique_dict.values()))
+                all_metrics[each] = list(unique_dict.values())
 
         results = {}
         for each in metric_names:
-            results[each] = round(all_metrics[each].mean().item(), 4)
+            results[each] = torch.tensor(all_metrics[each]).mean().item()
 
         if self.global_rank == 0 and self.tb_writer is not None:
             tb_info = {}
