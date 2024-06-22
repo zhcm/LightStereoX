@@ -256,7 +256,7 @@ class Trainer:
 
         results = {}
         for each in metric_names:
-            results[each] = torch.tensor(all_metrics[each]).mean().item()
+            results[each] = round(torch.tensor(all_metrics[each]).mean().item(), 4)
 
         if self.global_rank == 0 and self.tb_writer is not None:
             tb_info = {}

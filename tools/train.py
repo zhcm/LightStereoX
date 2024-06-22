@@ -42,7 +42,7 @@ def main():
     torch.cuda.set_device(local_rank)
     if cfg.train_params.fix_random_seed:
         seed = 0 if not args.dist_mode else dist.get_rank()
-        common_utils.set_random_seed(seed=seed)
+        common_utils.set_random_seed(seed=seed, deterministic=False)
 
     # savedir
     output_dir = str(os.path.join(cfg.train_params.save_root_dir, args.extra_tag))
