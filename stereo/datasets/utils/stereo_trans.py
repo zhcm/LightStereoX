@@ -231,7 +231,7 @@ class RandomScale(object):
     def __call__(self, sample):
         h, w = sample['left'].shape[:2]
 
-        floor_scale = max((self.crop_size[0] + 8) / h, (self.crop_size[1] + 8) / w)
+        floor_scale = max((self.crop_size[0] + 1) / h, (self.crop_size[1] + 1) / w)
         scale = random.uniform(self.min_scale, self.max_scale)
         scale_x = scale
         scale_y = scale

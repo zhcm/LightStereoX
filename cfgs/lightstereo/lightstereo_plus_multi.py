@@ -6,7 +6,6 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.datasets.utils import check
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
@@ -15,31 +14,25 @@ from cfgs.common.constants import constants
 
 
 # dataset
-check_augmentations = [
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
-    LazyCall(check.TransposeImage)(),
-    LazyCall(check.ToTensor)(),
-    LazyCall(check.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-]
 augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 kitti12 = LazyConfig.load('cfgs/common/datasets/kitti12.py')
-kitti12.trainval.augmentations = check_augmentations
+kitti12.trainval.augmentations = augmentations
 kitti12.trainval.return_right_disp = False
 
 kitti15 = LazyConfig.load('cfgs/common/datasets/kitti15.py')
-kitti15.trainval.augmentations = check_augmentations
+kitti15.trainval.augmentations = augmentations
 kitti15.trainval.return_right_disp = False
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = check_augmentations
+sceneflow.train.augmentations = augmentations
 sceneflow.train.return_right_disp = False
 
 driving = LazyConfig.load('cfgs/common/datasets/driving.py')
-driving.train.augmentations = check_augmentations
+driving.train.augmentations = augmentations
 
 # dataloader
 batch_size_per_gpu = 6
