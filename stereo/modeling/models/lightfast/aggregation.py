@@ -89,45 +89,11 @@ class MobileV2Residual(nn.Module):
             nn.BatchNorm2d(oup)
         )
 
-        # regular
-        # self.conv = nn.Sequential(
-        #     nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-        #     nn.BatchNorm2d(oup),
-        #     nn.ReLU(inplace=True),
-        # )
-
-        # v1
-        # self.v1conv = nn.Sequential(
-        #     # dw
-        #     nn.Conv2d(inp, inp, 3, stride, pad, dilation=dilation, groups=inp, bias=True),
-        #     nn.BatchNorm2d(inp),
-        #     nn.ReLU6(inplace=True),
-        #     # pw-linear
-        #     nn.Conv2d(inp, oup, 1, 1, 0, bias=True),
-        #     nn.BatchNorm2d(oup),
-        #     nn.ReLU6(inplace=True)
-        # )
-
-        # self.seblock = nn.Sequential(
-        #     nn.AdaptiveAvgPool2d(1),
-        #     nn.Conv2d(hidden_dim, inp, 1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(inp, hidden_dim, 1),
-        #     nn.Sigmoid()
-        # )
-
     def forward(self, x):
         # v2
         feat = self.pwconv(x)
         feat = self.dwconv(feat)
-        # feat = feat * self.seblock(feat) # se
         feat = self.pwliner(feat)
-
-        # v1
-        # feat = self.v1conv(x)
-
-        # regular
-        # feat = self.conv(x)
 
         if self.use_res_connect:
             return x + feat
