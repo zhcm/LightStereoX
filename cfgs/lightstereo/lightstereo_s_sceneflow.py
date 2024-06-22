@@ -6,7 +6,6 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.datasets.utils import check
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
@@ -15,18 +14,6 @@ from cfgs.common.constants import constants
 
 
 # dataset
-check_train_augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.5/3.14, 0.5/3.14],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=-0.2, max_scale=0.4,
-                                       scale_prob=0.8, stretch_prob=0.8),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
-    LazyCall(check.TransposeImage)(),
-    LazyCall(check.ToTensor)(),
-    LazyCall(check.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-]
 train_augmentations = [
     LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
                                              saturation=[0.6, 1.4], hue=[-0.5/3.14, 0.5/3.14],
@@ -37,21 +24,14 @@ train_augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
-
-check_val_augmentations = [
-    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
-    LazyCall(check.TransposeImage)(),
-    LazyCall(check.ToTensor)(),
-    LazyCall(check.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-]
 val_augmentations = [
     LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = check_train_augmentations
-sceneflow.val.augmentations = check_val_augmentations
+sceneflow.train.augmentations = train_augmentations
+sceneflow.val.augmentations = val_augmentations
 
 # dataloader
 batch_size_per_gpu = 24
@@ -66,7 +46,7 @@ train_loader = LazyCall(build_dataloader)(
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.val],
-    batch_size=12,
+    batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
     pin_memory=True)

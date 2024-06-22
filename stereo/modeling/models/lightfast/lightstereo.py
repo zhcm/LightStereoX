@@ -64,10 +64,10 @@ class LightStereo(nn.Module):
 
         result = {'disp_pred': disp_pred}
 
-        # if self.training:
-        #     disp_4 = F.interpolate(init_disp, image1.shape[2:], mode='bilinear', align_corners=False)
-        #     disp_4 *= 4
-        #     result['disp_4'] = disp_4
+        if self.training:
+            disp_4 = F.interpolate(init_disp, image1.shape[2:], mode='bilinear', align_corners=False)
+            disp_4 *= 4
+            result['disp_4'] = disp_4
 
         return result
 
@@ -79,8 +79,8 @@ class LightStereo(nn.Module):
         disp_pred = model_pred['disp_pred']
         loss = 1.0 * F.smooth_l1_loss(disp_pred[mask], disp_gt[mask], reduction='mean')
 
-        # disp_4 = model_pred['disp_4']
-        # loss += 0.3 * F.smooth_l1_loss(disp_4[mask], disp_gt[mask], reduction='mean')
+        disp_4 = model_pred['disp_4']
+        loss += 0.3 * F.smooth_l1_loss(disp_4[mask], disp_gt[mask], reduction='mean')
 
         loss_info = {'scalar/train/loss_disp': loss.item()}
 
