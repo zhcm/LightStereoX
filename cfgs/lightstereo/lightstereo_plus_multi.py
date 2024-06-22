@@ -84,3 +84,7 @@ train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStere
                               'MultiDataset/LightStereo_Plus')
 train_params.train_epochs = 90
 train_params.mixed_precision = True
+train_params.use_sync_bn = False
+train_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereo/output/'
+                                 'SceneFlowDataset/LightFast/lightstereo/fn-v2-b81632-e8-o-leftatt-efficientnet-lr6-epoch90-cesc/'
+                                 'ckpt/checkpoint_epoch_89.pth')
