@@ -9,12 +9,12 @@ train = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
     split_file='./data/SceneFlow/sceneflow_finalpass_train.txt',
     augmentations=None,
-    return_right_disp=False
+    return_right_disp=True
 )
 
 val = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
     split_file='./data/SceneFlow/sceneflow_finalpass_test.txt',
     augmentations=None,
-    return_right_disp=False
+    return_right_disp=True
 )
