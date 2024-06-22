@@ -19,10 +19,10 @@ class RandomCrop(object):
         if crop_width > width or crop_height > height:
             return sample
 
-        n_pixels = 2 if (self.y_jitter and np.random.rand() < 0.5) else 0
+        n_pixels = 2 if (self.y_jitter and random.random() < 0.5) else 0
         y1 = random.randint(n_pixels, height - crop_height - n_pixels)
         x1 = random.randint(0, width - crop_width)
-        y2 = y1 + np.random.randint(-n_pixels, n_pixels + 1)
+        y2 = y1 + random.randint(-n_pixels, n_pixels)
 
         for k in sample.keys():
             if k in ['right', 'disp_right']:
@@ -178,7 +178,7 @@ class StereoColorJitter(object):
         img1 = sample['left']
         img2 = sample['right']
         # asymmetric
-        if np.random.rand() < self.asymmetric_prob:
+        if random.random() < self.asymmetric_prob:
             img1 = np.array(self.color_jitter(Image.fromarray(img1.astype(np.uint8))), dtype=np.uint8)
             img2 = np.array(self.color_jitter(Image.fromarray(img2.astype(np.uint8))), dtype=np.uint8)
         # symmetric
@@ -204,13 +204,13 @@ class RandomErase(object):
         img2 = sample['right']
 
         h, w = img1.shape[:2]
-        if np.random.rand() < self.prob:
+        if random.random() < self.prob:
             mean_color = np.mean(img2.reshape(-1, 3), axis=0)
-            for _ in range(np.random.randint(1, self.max_time + 1)):
-                x0 = np.random.randint(0, w)
-                y0 = np.random.randint(0, h)
-                dx = np.random.randint(self.bounds[0], self.bounds[1])
-                dy = np.random.randint(self.bounds[0], self.bounds[1])
+            for _ in range(random.randint(1, self.max_time)):
+                x0 = random.randint(0, w - 1)
+                y0 = random.randint(0, h - 1)
+                dx = random.randint(self.bounds[0], self.bounds[1])
+                dy = random.randint(self.bounds[0], self.bounds[1])
                 img2[y0:y0 + dy, x0:x0 + dx, :] = mean_color
 
         sample['left'] = img1
@@ -226,23 +226,23 @@ class RandomScale(object):
         self.scale_prob = scale_prob
         self.stretch_prob = stretch_prob
 
-        self.max_stretch = 0.2
+        self.stretch = [2 ** -0.2, 2 ** 0.2]
 
     def __call__(self, sample):
         h, w = sample['left'].shape[:2]
 
         floor_scale = max((self.crop_size[0] + 8) / h, (self.crop_size[1] + 8) / w)
-        scale = 2 ** np.random.uniform(self.min_scale, self.max_scale)
+        scale = random.uniform(self.min_scale, self.max_scale)
         scale_x = scale
         scale_y = scale
-        if np.random.rand() < self.stretch_prob:
-            scale_x *= 2 ** np.random.uniform(-self.max_stretch, self.max_stretch)
-            scale_y *= 2 ** np.random.uniform(-self.max_stretch, self.max_stretch)
+        if random.random() < self.stretch_prob:
+            scale_x *= random.uniform(self.stretch[0], self.stretch[1])
+            scale_y *= random.uniform(self.stretch[0], self.stretch[1])
 
         scale_x = max(scale_x, floor_scale)
         scale_y = max(scale_y, floor_scale)
 
-        if np.random.rand() < self.scale_prob:
+        if random.random() < self.scale_prob:
             for k in sample.keys():
                 if k in ['left', 'right']:
                     sample[k] = cv2.resize(sample[k], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
@@ -264,10 +264,10 @@ class RandomSparseScale(object):
     def __call__(self, sample):
         h, w = sample['left'].shape[:2]
         floor_scale = max((self.crop_size[0] + 1) / h, (self.crop_size[1] + 1) / w)
-        scale = 2 ** np.random.uniform(self.min_scale, self.max_scale)
+        scale = random.uniform(self.min_scale, self.max_scale)
         scale = max(scale, floor_scale)
 
-        if np.random.randn() < self.prob:
+        if random.random() < self.prob:
             for k in sample.keys():
                 if k in ['left', 'right']:
                     sample[k] = cv2.resize(sample[k], dsize=None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)

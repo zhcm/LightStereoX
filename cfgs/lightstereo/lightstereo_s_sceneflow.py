@@ -15,11 +15,15 @@ from cfgs.common.constants import constants
 
 # dataset
 train_augmentations = [
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+]
+train_augmentations_full = [
     LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
                                              saturation=[0.6, 1.4], hue=[-0.5/3.14, 0.5/3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=-0.2, max_scale=0.4,
+    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=2 ** -0.2, max_scale=2 ** 0.4,
                                        scale_prob=0.8, stretch_prob=0.8),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
@@ -82,4 +86,3 @@ train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStere
                               'SceneFlowDataset/LightStereo_S')
 train_params.train_epochs = 90
 train_params.mixed_precision = True
-train_params.resume_from_ckpt = 1
