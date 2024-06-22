@@ -31,10 +31,6 @@ train_augmentations_full = [
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = train_augmentations
-sceneflow.val.augmentations = [
-    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-]
 
 # dataloader
 batch_size_per_gpu = 24

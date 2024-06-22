@@ -225,7 +225,6 @@ class RandomScale(object):
         self.max_scale = max_scale
         self.scale_prob = scale_prob
         self.stretch_prob = stretch_prob
-
         self.stretch = [2 ** -0.2, 2 ** 0.2]
 
     def __call__(self, sample):

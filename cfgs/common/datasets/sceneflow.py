@@ -2,6 +2,9 @@
 # @Author  : zhangchenming
 from stereo.config.lazy import LazyCall
 from stereo.datasets.sceneflow_dataset import SceneFlowDataset
+from stereo.datasets.utils import stereo_trans
+
+from cfgs.common.constants import constants
 
 data_root_path = '/mnt/nas/algorithm/chenming.zhang/dataset/SceneFlow'
 
@@ -15,6 +18,9 @@ train = LazyCall(SceneFlowDataset)(
 val = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
     split_file='./data/SceneFlow/sceneflow_finalpass_test.txt',
-    augmentations=None,
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ],
     return_right_disp=True
 )
