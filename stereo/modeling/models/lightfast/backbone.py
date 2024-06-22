@@ -27,13 +27,15 @@ class FPNLayer(nn.Module):
 
 
 class Backbone(nn.Module):
-    def __init__(self):
+    def __init__(self, bigbk=False):
         super().__init__()
-        model = timm.create_model('mobilenetv2_100', pretrained=True, features_only=True)
-        channels = [160, 96, 32, 24]
-
-        # model = timm.create_model('efficientnetv2_rw_s', pretrained=True, features_only=True)
-        # channels = [272, 160, 64, 48]
+        self.bigbk = bigbk
+        if bigbk:
+            model = timm.create_model('efficientnetv2_rw_s', pretrained=True, features_only=True)
+            channels = [272, 160, 64, 48]
+        else:
+            model = timm.create_model('mobilenetv2_100', pretrained=True, features_only=True)
+            channels = [160, 96, 32, 24]
 
         self.conv_stem = model.conv_stem
         self.bn1 = model.bn1
@@ -69,5 +71,7 @@ class Backbone(nn.Module):
 
     @property
     def out_dims(self):
-        return [24, 32, 96, 160]
-        # return [48, 64, 160, 272]
+        if self.bigbk:
+            return [48, 64, 160, 272]
+        else:
+            return [24, 32, 96, 160]

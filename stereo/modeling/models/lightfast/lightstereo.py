@@ -11,13 +11,13 @@ from .aggregation import Aggregation
 
 
 class LightStereo(nn.Module):
-    def __init__(self, max_disp, aggregation_blocks, expanse_ratio, left_att=True):
+    def __init__(self, max_disp, aggregation_blocks, expanse_ratio, left_att=True, bigbk=False):
         super().__init__()
         self.max_disp = max_disp
         self.left_att = left_att
 
         # backbobe
-        self.backbone = Backbone()
+        self.backbone = Backbone(bigbk)
         backbone_dims = self.backbone.out_dims
 
         # aggregation

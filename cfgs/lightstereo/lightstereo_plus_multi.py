@@ -46,7 +46,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[kitti15.trainval],
+    all_dataset=[sceneflow.val],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -55,9 +55,10 @@ val_loader = LazyCall(build_dataloader)(
 # model
 model = LazyCall(LightStereo)(
     max_disp=192,
-    aggregation_blocks=[4, 8, 16],
+    aggregation_blocks=[8, 16, 32],
     expanse_ratio=8,
-    left_att=True)
+    left_att=True,
+    bigbk=True)
 
 # optim
 lr = 0.0001 * batch_size_per_gpu
