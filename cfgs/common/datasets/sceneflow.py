@@ -3,6 +3,7 @@
 from stereo.config.lazy import LazyCall
 from stereo.datasets.sceneflow_dataset import SceneFlowDataset
 from stereo.datasets.utils import stereo_trans
+from stereo.datasets import build_dataloader
 
 from cfgs.common.constants import constants
 
@@ -24,3 +25,10 @@ val = LazyCall(SceneFlowDataset)(
     ],
     return_right_disp=True
 )
+
+val_loader = LazyCall(build_dataloader)(
+    all_dataset=[val],
+    batch_size=12,
+    shuffle=False,
+    workers=8,
+    pin_memory=True)
