@@ -2,6 +2,10 @@
 # @Author  : zhangchenming
 import random
 import numpy as np
+import cv2
+
+from PIL import Image
+from torchvision.transforms import ColorJitter
 
 
 class RandomCrop(object):
@@ -156,3 +160,148 @@ class CropOrPad(object):
             sample = self.crop_fn(sample)
 
         return sample
+
+
+class StereoColorJitter(object):
+    def __init__(self, brightness, contrast, saturation, hue, asymmetric_prob=0.0):
+        self.brightness = list(brightness)
+        self.contrast = list(contrast)
+        self.saturation = list(saturation)
+        self.hue = list(hue)
+        self.asymmetric_prob = asymmetric_prob
+        self.color_jitter = ColorJitter(brightness=self.brightness,
+                                        contrast=self.contrast,
+                                        saturation=self.saturation,
+                                        hue=self.hue)
+
+    def __call__(self, sample):
+        img1 = sample['left']
+        img2 = sample['right']
+        # asymmetric
+        if np.random.rand() < self.asymmetric_prob:
+            img1 = np.array(self.color_jitter(Image.fromarray(img1.astype(np.uint8))), dtype=np.uint8)
+            img2 = np.array(self.color_jitter(Image.fromarray(img2.astype(np.uint8))), dtype=np.uint8)
+        # symmetric
+        else:
+            image_stack = np.concatenate([img1, img2], axis=0).astype(np.uint8)
+            image_stack = np.array(self.color_jitter(Image.fromarray(image_stack)), dtype=np.uint8)
+            img1, img2 = np.split(image_stack, 2, axis=0)
+
+        sample['left'] = img1
+        sample['right'] = img2
+
+        return sample
+
+
+class RandomErase(object):
+    def __init__(self, prob, max_time, bounds):
+        self.prob = prob
+        self.max_time = max_time
+        self.bounds = bounds
+
+    def __call__(self, sample):
+        img1 = sample['left']
+        img2 = sample['right']
+
+        h, w = img1.shape[:2]
+        if np.random.rand() < self.prob:
+            mean_color = np.mean(img2.reshape(-1, 3), axis=0)
+            for _ in range(np.random.randint(1, self.max_time + 1)):
+                x0 = np.random.randint(0, w)
+                y0 = np.random.randint(0, h)
+                dx = np.random.randint(self.bounds[0], self.bounds[1])
+                dy = np.random.randint(self.bounds[0], self.bounds[1])
+                img2[y0:y0 + dy, x0:x0 + dx, :] = mean_color
+
+        sample['left'] = img1
+        sample['right'] = img2
+        return sample
+
+
+class RandomScale(object):
+    def __init__(self, crop_size, min_scale, max_scale, scale_prob, stretch_prob):
+        self.crop_size = crop_size
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.scale_prob = scale_prob
+        self.stretch_prob = stretch_prob
+
+        self.max_stretch = 0.2
+
+    def __call__(self, sample):
+        h, w = sample['left'].shape[:2]
+
+        floor_scale = max((self.crop_size[0] + 8) / h, (self.crop_size[1] + 8) / w)
+        scale = 2 ** np.random.uniform(self.min_scale, self.max_scale)
+        scale_x = scale
+        scale_y = scale
+        if np.random.rand() < self.stretch_prob:
+            scale_x *= 2 ** np.random.uniform(-self.max_stretch, self.max_stretch)
+            scale_y *= 2 ** np.random.uniform(-self.max_stretch, self.max_stretch)
+
+        scale_x = max(scale_x, floor_scale)
+        scale_y = max(scale_y, floor_scale)
+
+        if np.random.rand() < self.scale_prob:
+            for k in sample.keys():
+                if k in ['left', 'right']:
+                    sample[k] = cv2.resize(sample[k], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+
+                elif k in ['disp', 'disp_right']:
+                    sample[k] = cv2.resize(sample[k], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+                    sample[k] = sample[k] * scale_x
+
+        return sample
+
+
+class RandomSparseScale(object):
+    def __init__(self, crop_size, min_scale, max_scale, prob):
+        self.crop_size = crop_size
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.prob = prob
+
+    def __call__(self, sample):
+        h, w = sample['left'].shape[:2]
+        floor_scale = max((self.crop_size[0] + 1) / h, (self.crop_size[1] + 1) / w)
+        scale = 2 ** np.random.uniform(self.min_scale, self.max_scale)
+        scale = max(scale, floor_scale)
+
+        if np.random.randn() < self.prob:
+            for k in sample.keys():
+                if k in ['left', 'right']:
+                    sample[k] = cv2.resize(sample[k], dsize=None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
+                elif k in ['disp', 'disp_right']:
+                    sample[k] = self.sparse_disp_map_reisze(sample[k], fx=scale, fy=scale)
+
+        return sample
+
+    @staticmethod
+    def sparse_disp_map_reisze(disp, fx=1.0, fy=1.0):
+        h, w = disp.shape[:2]
+        h_new = round(h * fy)
+        w_new = round(w * fx)
+
+        coords = np.meshgrid(np.arange(w), np.arange(h))
+        coords = np.stack(coords, axis=-1)  # [h, w, 2] 坐标(x, y)
+        coords = coords.reshape(-1, 2).astype(np.float32)  # [h*w, 2] 坐标(x, y)
+
+        disp = disp.reshape(-1).astype(np.float32)  # [h*w,]
+        valid = disp > 0.0
+        coords = coords[valid]  # disp > 0 的坐标
+        disp = disp[valid]  # disp > 0 的值
+        coords = coords * [fx, fy]  # resize 后的坐标
+        disp = disp * fx  # risize 后的值
+
+        coords_x = np.round(coords[:, 0]).astype(np.int32)
+        coords_y = np.round(coords[:, 1]).astype(np.int32)
+        v = (coords_x > 0) & (coords_x < w_new) & (coords_y > 0) & (coords_y < h_new)
+
+        coords_x = coords_x[v]
+        coords_y = coords_y[v]
+        disp = disp[v]
+
+        resized_disp = np.zeros([h_new, w_new], dtype=np.float32)
+        resized_disp[coords_y, coords_x] = disp
+
+        return resized_disp

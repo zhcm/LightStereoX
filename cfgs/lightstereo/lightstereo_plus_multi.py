@@ -15,49 +15,37 @@ from cfgs.common.constants import constants
 
 
 # dataset
-check_train_augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.5/3.14, 0.5/3.14],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=-0.2, max_scale=0.4,
-                                       scale_prob=0.8, stretch_prob=0.8),
+check_augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(check.TransposeImage)(),
     LazyCall(check.ToTensor)(),
     LazyCall(check.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ]
-train_augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.5/3.14, 0.5/3.14],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=-0.2, max_scale=0.4,
-                                       scale_prob=0.8, stretch_prob=0.8),
+augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-check_val_augmentations = [
-    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
-    LazyCall(check.TransposeImage)(),
-    LazyCall(check.ToTensor)(),
-    LazyCall(check.NormalizeImage)(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-]
-val_augmentations = [
-    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-]
+kitti12 = LazyConfig.load('cfgs/common/datasets/kitti12.py')
+kitti12.trainval.augmentations = check_augmentations
+kitti12.trainval.return_right_disp = False
+
+kitti15 = LazyConfig.load('cfgs/common/datasets/kitti15.py')
+kitti15.trainval.augmentations = check_augmentations
+kitti15.trainval.return_right_disp = False
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = check_train_augmentations
-sceneflow.val.augmentations = check_val_augmentations
+sceneflow.train.augmentations = check_augmentations
+sceneflow.train.return_right_disp = False
+
+driving = LazyConfig.load('cfgs/common/datasets/driving.py')
+driving.train.augmentations = check_augmentations
 
 # dataloader
-batch_size_per_gpu = 24
+batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sceneflow.train],
+    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train, driving.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -65,8 +53,8 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sceneflow.val],
-    batch_size=12,
+    all_dataset=[kitti15.trainval],
+    batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
     pin_memory=True)
@@ -74,8 +62,8 @@ val_loader = LazyCall(build_dataloader)(
 # model
 model = LazyCall(LightStereo)(
     max_disp=192,
-    aggregation_blocks=[1, 2, 4],
-    expanse_ratio=4,
+    aggregation_blocks=[4, 8, 16],
+    expanse_ratio=8,
     left_att=True)
 
 # optim
@@ -99,7 +87,6 @@ eval_params = dict(
 
 # train params
 train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                              'SceneFlowDataset/LightStereo_S')
+                              'MultiDataset/LightStereo_Plus')
 train_params.train_epochs = 90
 train_params.mixed_precision = True
-train_params.resume_from_ckpt = 1
