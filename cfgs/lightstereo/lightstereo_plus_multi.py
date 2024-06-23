@@ -12,7 +12,6 @@ from stereo.solver.build import get_model_params, ClipGradValue
 from cfgs.common.runtime_params import runtime_params
 from cfgs.common.constants import constants
 
-
 # dataset
 augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
