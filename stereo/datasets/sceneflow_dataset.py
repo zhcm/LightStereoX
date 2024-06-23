@@ -43,10 +43,10 @@ class SceneFlowDataset(DatasetTemplate):
 
 
 class FlyingThings3DSubsetDataset(DatasetTemplate):
-    def __init__(self, data_info, data_cfg, mode):
-        super().__init__(data_info, data_cfg, mode)
-        self.return_occ_mask = self.data_info.RETURN_OCC_MASK
-        self.zeroing_occ = self.data_info.ZEROING_OCC
+    def __init__(self, data_root_path, split_file, augmentations, return_occ_mask, zeroing_occ):
+        super().__init__(data_root_path, split_file, augmentations)
+        self.return_occ_mask = return_occ_mask
+        self.zeroing_occ = zeroing_occ
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
@@ -81,7 +81,9 @@ class FlyingThings3DSubsetDataset(DatasetTemplate):
         if self.zeroing_occ:
             sample = self.make_occ_disp_zero(sample, None)
 
-        sample = self.transform(sample)
+        for t in self.augmentations:
+            sample = t(sample)
+
         return sample
 
     def make_occ_disp_zero(self, input_data, transformation):
