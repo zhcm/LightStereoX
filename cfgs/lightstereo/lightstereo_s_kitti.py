@@ -9,7 +9,7 @@ from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.train_params import train_params
+from cfgs.common.runtime_params import runtime_params
 from cfgs.common.constants import constants
 
 # dataset
@@ -65,16 +65,11 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
-# eval params
-eval_params = dict(
-    eval_max_disp=192
-)
-
 # train params
-train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                              'KittiDataset/LightStereo_S')
-train_params.train_epochs = 500
-train_params.eval_period = 100
-train_params.max_ckpt_save_num = 100
-train_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                 'SceneFlowDataset/LightStereo_S/cesc/ckpt/epoch_89/pytorch_model.bin')
+runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
+                                'KittiDataset/LightStereo_S')
+runtime_params.train_epochs = 500
+runtime_params.eval_period = 100
+runtime_params.max_ckpt_save_num = 100
+runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
+                                   'SceneFlowDataset/LightStereo_S/cesc/ckpt/epoch_89/pytorch_model.bin')

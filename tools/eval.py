@@ -25,7 +25,7 @@ def parse_config():
     cfg = LazyConfig.load(args.cfg_file)
     if not os.path.isfile(args.pretrained_model):
         raise FileNotFoundError
-    cfg.train_params.pretrained_model = args.pretrained_model
+    cfg.runtime_params.pretrained_model = args.pretrained_model
     if args.eval_data_cfg_file:
         cfg.val_loader = LazyConfig.load(args.eval_data_cfg_file).val_loader
 

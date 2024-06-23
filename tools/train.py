@@ -40,13 +40,13 @@ def main():
 
     # env
     torch.cuda.set_device(local_rank)
-    if cfg.train_params.fix_random_seed:
+    if cfg.runtime_params.fix_random_seed:
         seed = 0 if not args.dist_mode else dist.get_rank()
         common_utils.set_random_seed(seed=seed, deterministic=False)
 
     # savedir
-    output_dir = str(os.path.join(cfg.train_params.save_root_dir, args.extra_tag))
-    if os.path.exists(output_dir) and args.extra_tag != 'debug' and cfg.train_params.resume_from_ckpt == -1:
+    output_dir = str(os.path.join(cfg.runtime_params.save_root_dir, args.extra_tag))
+    if os.path.exists(output_dir) and args.extra_tag != 'debug' and cfg.runtime_params.resume_from_ckpt == -1:
         raise Exception('There is already an exp with this name')
     if args.dist_mode:
         dist.barrier()
@@ -90,14 +90,14 @@ def main():
     args.ckpt_dir = ckpt_dir
     model_trainer = Trainer(args, cfg, logger, tb_writer)
 
-    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.train_params.train_epochs,
+    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.runtime_params.train_epochs,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
                        bar_format='{l_bar}{bar}{r_bar}\n')
     # train loop
     for current_epoch in tbar:
         model_trainer.train(current_epoch, tbar)
         model_trainer.save_ckpt(current_epoch)
-        if current_epoch % cfg.train_params.eval_period == 0 or current_epoch == cfg.train_params.train_epochs - 1:
+        if current_epoch % cfg.runtime_params.eval_period == 0 or current_epoch == cfg.runtime_params.train_epochs - 1:
             model_trainer.evaluate(current_epoch)
 
 

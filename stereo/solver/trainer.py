@@ -45,14 +45,14 @@ class Trainer:
             # scheduler
             cfg.scheduler.optimizer = self.optimizer
             if 'total_steps' in self.cfg.scheduler:
-                cfg.scheduler.total_steps = cfg.train_params.train_epochs * len(self.train_loader)
+                cfg.scheduler.total_steps = cfg.runtime_params.train_epochs * len(self.train_loader)
             self.scheduler = instantiate(cfg.scheduler)
 
             # scaler
-            self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.train_params.mixed_precision)
+            self.scaler = torch.cuda.amp.GradScaler(enabled=cfg.runtime_params.mixed_precision)
 
             # resume
-            if cfg.train_params.resume_from_ckpt > -1:
+            if cfg.runtime_params.resume_from_ckpt > -1:
                 self.resume_ckpt()
 
             # clip grad
@@ -63,32 +63,32 @@ class Trainer:
         model = instantiate(self.cfg.model)
         model = model.to(self.local_rank)
         # load pretrained model
-        pretrained_model = self.cfg.train_params.pretrained_model
+        pretrained_model = self.cfg.runtime_params.pretrained_model
         if pretrained_model:
             self.logger.info('Loading parameters from checkpoint %s' % pretrained_model)
             if not os.path.isfile(pretrained_model):
                 raise FileNotFoundError
             common_utils.load_params_from_file(model, pretrained_model, device='cpu', logger=self.logger, strict=False)
         # freeze bn
-        if self.cfg.train_params.freeze_bn:
+        if self.cfg.runtime_params.freeze_bn:
             model = common_utils.freeze_bn(model)
             self.logger.info('Freeze the batch normalization layers')
         # syncbn
-        if self.cfg.train_params.use_sync_bn and self.args.dist_mode:
+        if self.cfg.runtime_params.use_sync_bn and self.args.dist_mode:
             model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
             self.logger.info('Convert batch norm to sync batch norm')
         # ddp
         if self.args.dist_mode:
             model = nn.parallel.DistributedDataParallel(
                 model, device_ids=[self.local_rank], output_device=self.local_rank,
-                find_unused_parameters=self.cfg.train_params.find_unused_parameters)
+                find_unused_parameters=self.cfg.runtime_params.find_unused_parameters)
             self.logger.info('Convert model to DistributedDataParallel')
         return model
 
     def resume_ckpt(self):
-        self.logger.info('Resume from ckpt:%d' % self.cfg.train_params.resume_from_ckpt)
-        self.last_epoch = self.cfg.train_params.resume_from_ckpt
-        checkpoint_dir = str(os.path.join(self.args.ckpt_dir, 'epoch_%d' % self.cfg.train_params.resume_from_ckpt))
+        self.logger.info('Resume from ckpt:%d' % self.cfg.runtime_params.resume_from_ckpt)
+        self.last_epoch = self.cfg.runtime_params.resume_from_ckpt
+        checkpoint_dir = str(os.path.join(self.args.ckpt_dir, 'epoch_%d' % self.cfg.runtime_params.resume_from_ckpt))
 
         model_state = torch.load(os.path.join(checkpoint_dir, 'pytorch_model.bin'),
                                  map_location='cuda:%d' % self.local_rank)
@@ -109,7 +109,7 @@ class Trainer:
 
     def train(self, current_epoch, tbar):
         self.model.train()
-        if self.cfg.train_params.freeze_bn:
+        if self.cfg.runtime_params.freeze_bn:
             self.model = common_utils.freeze_bn(self.model)
         if self.args.dist_mode:
             self.train_sampler.set_epoch(current_epoch)
@@ -128,8 +128,8 @@ class Trainer:
             # remove
             ckpt_list = glob.glob(os.path.join(self.args.ckpt_dir, 'epoch_*'))
             ckpt_list.sort(key=os.path.getmtime)
-            if len(ckpt_list) >= self.cfg.train_params.max_ckpt_save_num:
-                for cur_file_idx in range(0, len(ckpt_list) - self.cfg.train_params.max_ckpt_save_num + 1):
+            if len(ckpt_list) >= self.cfg.runtime_params.max_ckpt_save_num:
+                for cur_file_idx in range(0, len(ckpt_list) - self.cfg.runtime_params.max_ckpt_save_num + 1):
                     shutil.rmtree(ckpt_list[cur_file_idx])
             # save
             output_dir = os.path.join(self.args.ckpt_dir, 'epoch_%d' % current_epoch)
@@ -141,7 +141,7 @@ class Trainer:
 
     def train_one_epoch(self, current_epoch, tbar):
         start_epoch = self.last_epoch + 1
-        total_epochs = self.cfg.train_params.train_epochs
+        total_epochs = self.cfg.runtime_params.train_epochs
         total_loss = 0.0
         loss_func = self.model.module.get_loss if self.args.dist_mode else self.model.get_loss
 
@@ -157,7 +157,7 @@ class Trainer:
                 data[k] = v.to(self.local_rank) if torch.is_tensor(v) else v
             data_timer = time.time()
 
-            with torch.cuda.amp.autocast(enabled=self.cfg.train_params.mixed_precision):
+            with torch.cuda.amp.autocast(enabled=self.cfg.runtime_params.mixed_precision):
                 model_pred = self.model(data)
                 infer_timer = time.time()
                 loss, tb_info = loss_func(model_pred, data)
@@ -183,7 +183,7 @@ class Trainer:
             trained_time_past_all = tbar.format_dict['elapsed']
             single_iter_second = trained_time_past_all / (total_iter + 1 - start_epoch * len(self.train_loader))
             remaining_second_all = single_iter_second * (total_epochs * len(self.train_loader) - total_iter - 1)
-            if total_iter % self.cfg.train_params.log_period == 0:
+            if total_iter % self.cfg.runtime_params.log_period == 0:
                 message = ('Training Epoch:{:>2d}/{} Iter:{:>4d}/{} '
                            'Loss:{:#.6g}({:#.6g}) LR:{:.4e} '
                            'DataTime:{:.2f}ms InferTime:{:.2f}ms '
@@ -210,14 +210,14 @@ class Trainer:
             for k, v in data.items():
                 data[k] = v.to(self.local_rank) if torch.is_tensor(v) else v
 
-            with torch.cuda.amp.autocast(enabled=self.cfg.train_params.mixed_precision):
+            with torch.cuda.amp.autocast(enabled=self.cfg.runtime_params.mixed_precision):
                 infer_start = time.time()
                 model_pred = self.model(data)
                 infer_time = time.time() - infer_start
 
             disp_pred = model_pred['disp_pred']
             disp_gt = data["disp"]
-            mask = (disp_gt < self.cfg.eval_params.eval_max_disp) & (disp_gt > 0.5)
+            mask = (disp_gt < self.cfg.runtime_params.eval_max_disp) & (disp_gt > 0.5)
             if 'occ_mask' in data:
                 mask = mask & (data['occ_mask'] == 255.0)
 
@@ -227,7 +227,7 @@ class Trainer:
                 res = metric_func(disp_pred.squeeze(1), disp_gt, mask)
                 all_metrics[each].extend(res.tolist())
 
-            if i % self.cfg.train_params.log_period == 0:
+            if i % self.cfg.runtime_params.log_period == 0:
                 message = ('Evaluating Epoch:{:>2d} Iter:{:>4d}/{} InferTime: {:.2f}ms'
                            ).format(current_epoch, i, len(self.val_loader), infer_time * 1000)
                 self.logger.info(message)

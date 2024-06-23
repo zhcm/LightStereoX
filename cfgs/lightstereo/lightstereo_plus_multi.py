@@ -9,7 +9,7 @@ from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.lightfast.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.train_params import train_params
+from cfgs.common.runtime_params import runtime_params
 from cfgs.common.constants import constants
 
 
@@ -74,17 +74,12 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
-# eval params
-eval_params = dict(
-    eval_max_disp=192
-)
-
 # train params
-train_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                              'MultiDataset/LightStereo_Plus')
-train_params.train_epochs = 90
-train_params.mixed_precision = True
-train_params.use_sync_bn = False
-train_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereo/output/'
-                                 'SceneFlowDataset/LightFast/lightstereo/fn-v2-b81632-e8-o-leftatt-efficientnet-lr6-epoch90-cesc/'
-                                 'ckpt/checkpoint_epoch_89.pth')
+runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
+                                'MultiDataset/LightStereo_Plus')
+runtime_params.train_epochs = 90
+runtime_params.mixed_precision = True
+runtime_params.use_sync_bn = False
+runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereo/output/'
+                                   'SceneFlowDataset/LightFast/lightstereo/fn-v2-b81632-e8-o-leftatt-efficientnet-lr6-epoch90-cesc/'
+                                   'ckpt/checkpoint_epoch_89.pth')
