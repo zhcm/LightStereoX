@@ -31,14 +31,14 @@ sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = augmentations
 sceneflow.train.return_right_disp = False
 
-driving = LazyConfig.load('cfgs/common/datasets/driving.py')
-driving.train.augmentations = augmentations
+drivingstereo = LazyConfig.load('cfgs/common/datasets/drivingstereo.py')
+drivingstereo.train.augmentations = augmentations
 
 # dataloader
 batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train, driving.train],
+    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train, drivingstereo.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
