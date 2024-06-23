@@ -12,11 +12,11 @@ data_root_path = '/mnt/nas/algorithm/chenming.zhang/dataset/KITTI/stereo_2012'
 trainval = LazyCall(KittiDataset)(
     data_root_path=data_root_path,
     split_file='./data/KITTI2012/kitti12_train194.txt',
-    return_right_disp=True,
     augmentations=[
         LazyCall(stereo_trans.ConstantPad)(target_size=[384, 1248], mode='tr'),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
     ],
+    return_right_disp=True,
     use_noc=False
 )
 
