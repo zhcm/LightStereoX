@@ -2,5 +2,6 @@
 **__pycache__**
 **.DS_Store**
 submit.py
+test.py
 tools/infer.py
 tools/scripts/eval.sh

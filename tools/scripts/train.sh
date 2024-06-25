@@ -26,9 +26,9 @@ master_ip=$(getent hosts "$master_name" | awk '{ print $1 }' | head -n1)
 master_port=$MASTER_PORT
 
 # 执行
-torchrun \
-    --nnodes=$NNODES \
-    --nproc_per_node=8 \
-    --rdzv_backend=c10d \
-    --rdzv_endpoint=$master_ip:$master_port \
-    tools/train.py --dist_mode $PY_ARGS
+torchrun --nnodes=$NNODES --nproc_per_node=8 --rdzv_backend=c10d --rdzv_endpoint=$master_ip:$master_port \
+tools/train.py --dist_mode $PY_ARGS
+
+#torchrun --nnodes=$NNODES --nproc_per_node=8 --node_rank=$RANK \
+#--master_addr=$master_ip --master_port=$master_port \
+#tools/train.py --dist_mode $PY_ARGS
