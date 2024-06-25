@@ -30,7 +30,7 @@ val_loader = LazyCall(build_dataloader)(
 
 test = LazyCall(KittiTestDataset)(
     data_root_path=data_root_path,
-    split_file='./data/KITTI15/kitti15_test.txt',
+    split_file='./data/KITTI2015/kitti15_test.txt',
     augmentations=[
         LazyCall(stereo_trans.ConstantPad)(target_size=[384, 1248], mode='tr'),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)

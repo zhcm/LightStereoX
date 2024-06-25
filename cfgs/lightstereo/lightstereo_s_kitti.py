@@ -73,3 +73,4 @@ runtime_params.eval_period = 100
 runtime_params.max_ckpt_save_num = 100
 runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
                                    'SceneFlowDataset/LightStereo_S/cesc/ckpt/epoch_89/pytorch_model.bin')
+runtime_params.mixed_precision = True
