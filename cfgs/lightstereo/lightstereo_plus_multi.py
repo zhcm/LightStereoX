@@ -79,6 +79,5 @@ runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightSte
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True
 runtime_params.use_sync_bn = False
-runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereo/output/'
-                                   'SceneFlowDataset/LightFast/lightstereo/fn-v2-b81632-e8-o-leftatt-efficientnet-lr6-epoch90-cesc/'
-                                   'ckpt/checkpoint_epoch_89.pth')
+runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
+                                   'SceneFlowDataset/LightStereo_Plus/cesc_amp/ckpt/epoch_89/pytorch_model.bin')
