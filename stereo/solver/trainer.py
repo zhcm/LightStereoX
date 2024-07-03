@@ -22,6 +22,8 @@ class Trainer:
         self.local_rank = args.local_rank
         self.global_rank = args.global_rank
         self.last_epoch = -1
+        self.clip_gard = None
+        self.warmup = None
 
         # model
         self.model = self.build_model()
@@ -54,6 +56,12 @@ class Trainer:
             # resume
             if cfg.runtime_params.resume_from_ckpt > -1:
                 self.resume_ckpt()
+
+            # warmup
+            if 'warmup' in cfg:
+                cfg.warmup.optimizer = self.optimizer
+                cfg.warmup.last_step = (self.last_epoch + 1) * len(self.train_loader) - 1
+                self.warmup = instantiate(cfg.warmup)
 
             # clip grad
             if 'clip_grad' in cfg:
@@ -114,6 +122,11 @@ class Trainer:
         if self.args.dist_mode:
             self.train_sampler.set_epoch(current_epoch)
         self.train_one_epoch(current_epoch=current_epoch, tbar=tbar)
+        if 'total_steps' not in self.cfg.scheduler:
+            self.scheduler.step()
+            if self.warmup:
+                self.warmup.lrs = [group['lr'] for group in self.optimizer.param_groups]
+
         if self.args.dist_mode:
             dist.barrier()
 
@@ -176,6 +189,10 @@ class Trainer:
             # scheduler
             if 'total_steps' in self.cfg.scheduler:
                 self.scheduler.step()
+            # warmup
+            if self.warmup:
+                with self.warmup.dampening():
+                    pass
 
             # logging
             total_loss += loss.item()

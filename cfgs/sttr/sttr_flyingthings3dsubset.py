@@ -8,6 +8,7 @@ from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.sttr.sttr import STTR, get_model_params
 from stereo.solver.build import ClipGradNorm
+from stereo.solver.warmup import LinearWarmup
 
 from cfgs.common.runtime_params import runtime_params
 from cfgs.common.constants import constants
@@ -54,6 +55,9 @@ optimizer = LazyCall(Adam)(
 
 # scheduler
 scheduler = LazyCall(MultiStepLR)(optimizer=None, milestones=[5, 7, 9], gamma=0.5)
+
+# warmup
+warmup = LazyCall(LinearWarmup)(optimizer=None, warmup_period=2000, last_step=-1)
 
 # clip grad
 clip_grad = LazyCall(ClipGradNorm)(max_norm=35)
