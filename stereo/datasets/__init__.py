@@ -39,7 +39,7 @@ def get_size(base_size, w_range, h_range):
 def custom_collate(data_list, concat_dataset, batch_uniform=False, h_range=None, w_range=None):
     if batch_uniform:
         for each_dataset in concat_dataset.datasets:
-            for cur_t in each_dataset.transform.transforms:
+            for cur_t in each_dataset.augmentations:
                 if type(cur_t).__name__ == 'RandomCrop':
                     base_size = cur_t.base_size
                     cur_t.crop_size = get_size(base_size, w_range, h_range)

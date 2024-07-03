@@ -11,6 +11,7 @@ from torchvision.transforms import ColorJitter
 class RandomCrop(object):
     def __init__(self, crop_size, y_jitter=False):
         self.crop_size = crop_size
+        self.base_size = crop_size
         self.y_jitter = y_jitter
 
     def __call__(self, sample):
