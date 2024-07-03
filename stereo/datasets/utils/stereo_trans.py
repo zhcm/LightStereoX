@@ -26,7 +26,7 @@ class RandomCrop(object):
         y2 = y1 + random.randint(-n_pixels, n_pixels)
 
         for k in sample.keys():
-            if k in ['right', 'disp_right']:
+            if k in ['right', 'disp_right', 'occ_mask_right']:
                 sample[k] = sample[k][y2: y2 + crop_height, x1: x1 + crop_width]
             else:
                 sample[k] = sample[k][y1: y1 + crop_height, x1: x1 + crop_width]

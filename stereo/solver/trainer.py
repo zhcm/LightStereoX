@@ -236,7 +236,7 @@ class Trainer:
             disp_gt = data["disp"]
             mask = (disp_gt < self.cfg.runtime_params.eval_max_disp) & (disp_gt > 0.5)
             if 'occ_mask' in data:
-                mask = mask & (data['occ_mask'] == 255.0)
+                mask = mask & ~data['occ_mask']
 
             all_indexes.extend(data['index'].tolist())
             for each in metric_names:

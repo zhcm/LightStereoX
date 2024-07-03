@@ -79,17 +79,17 @@ class FlyingThings3DSubsetDataset(DatasetTemplate):
             })
 
         if self.zeroing_occ:
-            sample = self.make_occ_disp_zero(sample, None)
+            sample = self.make_occ_disp_zero(sample)
 
         for t in self.augmentations:
             sample = t(sample)
 
+        sample['index'] = idx
+        sample['name'] = left_img_path
+
         return sample
 
-    def make_occ_disp_zero(self, input_data, transformation):
-        if transformation is not None:
-            input_data = transformation(**input_data)
-
+    def make_occ_disp_zero(self, input_data):
         w = input_data['disp'].shape[-1]
         input_data['disp'][input_data['disp'] > w] = 0
         input_data['disp'][input_data['disp'] < 0] = 0
@@ -124,8 +124,8 @@ class FlyingThings3DSubsetDataset(DatasetTemplate):
         :return: occ mask
         """
         coord = np.linspace(0, w - 1, w)[None,]  # [1, w]
-        shifted_coord = coord - disp
-        occ_mask = shifted_coord < 0  # occlusion mask, 1 indicates occ
+        shifted_coord = coord - disp  # 通过视差找到右图对应的点
+        occ_mask = shifted_coord < 0  # 判断是否在图片之外
         return occ_mask
 
     @staticmethod
@@ -137,6 +137,6 @@ class FlyingThings3DSubsetDataset(DatasetTemplate):
         :return: occ mask
         """
         coord = np.linspace(0, w - 1, w)[None,]  # [1, w]
-        shifted_coord = coord + disp
-        occ_mask = shifted_coord > w  # occlusion mask, 1 indicates occ
+        shifted_coord = coord + disp  # 通过视差找到左图对应的点
+        occ_mask = shifted_coord > w  # 判断是否在图片之外
         return occ_mask
