@@ -8,6 +8,7 @@ from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.sttr.sttr import STTR, get_model_params
 from stereo.modeling.models.sttr.sttr_utils.backbone import SppBackbone
+from stereo.modeling.models.sttr.sttr_utils.repvit import RepVit
 from stereo.solver.build import ClipGradNorm
 from stereo.solver.warmup import LinearWarmup
 
@@ -69,3 +70,4 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=35)
 runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
                                 'SceneFlowDataset/STTR')
 runtime_params.train_epochs = 10
+runtime_params.find_unused_parameters = False  # must be false, there is a bug with torch.utils.checkpoint and find_unused_parameters=True
