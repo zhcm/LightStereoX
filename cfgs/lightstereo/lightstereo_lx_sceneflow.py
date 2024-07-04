@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.backbones.mobilenet import MobileNetV2
+from stereo.modeling.backbones.efficientnetv2 import EfficientNetV2
 from stereo.modeling.models.lightstereo.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
@@ -33,7 +33,7 @@ sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = train_augmentations_full
 
 # dataloader
-batch_size_per_gpu = 12
+batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.train],
@@ -52,10 +52,10 @@ val_loader = LazyCall(build_dataloader)(
 
 # model
 model = LazyCall(LightStereo)(
-    backbone=LazyCall(MobileNetV2)(),
+    backbone=LazyCall(EfficientNetV2)(),
     max_disp=192,
-    aggregation_blocks=[4, 8, 16],
-    expanse_ratio=4,
+    aggregation_blocks=[8, 16, 32],
+    expanse_ratio=8,
     left_att=True)
 
 # optim
@@ -74,6 +74,6 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
 runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                'SceneFlowDataset/LightStereo_M')
+                                'SceneFlowDataset/LightStereo_LX')
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True
