@@ -27,11 +27,11 @@ class MobileNetV2(nn.Module):
         c5 = self.block4(c4)  # [bz, 160, H/32, W/32]
         # c5 = self.block5(c5)  # [bz, 320, H/32, W/32]
 
-        return [c1, c2, c3, c4, c5]
+        return {'scale1': c1, 'scale2': c2, 'scale3': c3, 'scale4': c4, 'scale5': c5}
 
     @property
     def out_dims(self):
-        return [16, 24, 32, 96, 160]
+        return {'scale1': 16, 'scale2': 24, 'scale3': 32, 'scale4': 96, 'scale5': 160}
 
 
 class MobileNetV3(nn.Module):
@@ -55,8 +55,8 @@ class MobileNetV3(nn.Module):
         c4 = self.block3(c3)  # [bz, 112, H/16, W/16]
         c5 = self.block4(c4)  # [bz, 160, H/32, W/32]
 
-        return [c1, c2, c3, c4, c5]
+        return {'scale1': c1, 'scale2': c2, 'scale3': c3, 'scale4': c4, 'scale5': c5}
 
     @property
     def out_dims(self):
-        return [16, 24, 40, 112, 160]
+        return {'scale1': 16, 'scale2': 24, 'scale3': 40, 'scale4': 112, 'scale5': 160}

@@ -25,8 +25,8 @@ class EfficientNetV2(nn.Module):
         c4 = self.block3(c3)  # [bz, 160, H/16, W/16]
         c5 = self.block4(c4)  # [bz, 272, H/32, W/32]
 
-        return [c1, c2, c3, c4, c5]
+        return {'scale1': c1, 'scale2': c2, 'scale3': c3, 'scale4': c4, 'scale5': c5}
 
     @property
     def out_dims(self):
-        return [24, 48, 64, 160, 272]
+        return {'scale1': 24, 'scale2': 48, 'scale3': 64, 'scale4': 160, 'scale5': 272}

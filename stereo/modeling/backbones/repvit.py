@@ -26,8 +26,8 @@ class RepVit(nn.Module):
         c4 = self.stage2(c3)  # [bz, 192, H/16, W/16]
         c5 = self.stage3(c4)  # [bz, 384, H/32, W/32]
 
-        return [c2, c3, c4, c5]
+        return {'scale2': c2, 'scale3': c3, 'scale4': c4, 'scale5': c5}
 
     @property
     def out_dims(self):
-        return [48, 96, 192, 384]
+        return {'scale2': 48, 'scale3': 96, 'scale4': 192, 'scale5': 384}
