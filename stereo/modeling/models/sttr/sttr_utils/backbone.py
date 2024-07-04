@@ -73,10 +73,9 @@ class SppBackbone(nn.Module):
             layers.append(block(self.inplanes, planes, norm_layer=nn.InstanceNorm2d))
         return nn.Sequential(*layers)
 
-    def forward(self, left, right):
-        _, _, h, w = left.shape
+    def forward(self, src_stereo):
+        _, _, h, w = src_stereo.shape
 
-        src_stereo = torch.cat([left, right], dim=0)  # [2bz, 3, H, W]
         output = self.in_conv(src_stereo)  # 1/2
         output_1 = self.resblock_1(output)  # 1/4
         output_2 = self.resblock_2(output_1)  # 1/8
@@ -93,4 +92,9 @@ class SppBackbone(nn.Module):
         spp_4 = F.interpolate(spp_4, size=(h_spp, w_spp), mode='bilinear', align_corners=False)
         output_3 = torch.cat([spp_1, spp_2, spp_3, spp_4], dim=1)  # 1/16
 
-        return [output_3, output_2, output_1, src_stereo]
+        # return [output_3, output_2, output_1, src_stereo]
+        return {'scale4': output_3, 'scale3': output_2, 'scale2': output_1}
+
+    @property
+    def out_dims(self):
+        return {'scale2': 64, 'scale3': 128, 'scale4': 128}

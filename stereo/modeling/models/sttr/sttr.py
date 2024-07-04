@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .sttr_utils.backbone import SppBackbone
 from .sttr_utils.tokenizer import Tokenizer
 from .sttr_utils.pos_encoder import PositionEncodingSine1DRelative
 from .sttr_utils.transformer import Transformer
@@ -14,7 +13,7 @@ from .sttr_utils.utils import torch_1d_sample
 
 
 class STTR(nn.Module):
-    def __init__(self, downsample=3, validation_max_disp=-1, px_threshold=3, channel_dim=128, position_encoding='sine1d_rel', nhead=8, num_attn_layers=6,
+    def __init__(self, backbone, downsample=3, validation_max_disp=-1, px_threshold=3, channel_dim=128, position_encoding='sine1d_rel', nhead=8, num_attn_layers=6,
                  regression_head='ot', cal_num_blocks=8, cal_feat_dim=16, cal_expansion_ratio=4):
         super(STTR, self).__init__()
         self.validation_max_disp = validation_max_disp
@@ -24,9 +23,11 @@ class STTR(nn.Module):
         self.sampled_cols = None
         self.sampled_rows = None
 
-        self.backbone = SppBackbone()
+        self.backbone = backbone
+        out_dims = self.backbone.out_dims
+        backbone_feat_channel = [out_dims['scale4'], out_dims['scale3'], out_dims['scale2']]
         self.tokenizer = Tokenizer(block_config=[4, 4, 4, 4],
-                                   backbone_feat_channel=[128, 128, 64],
+                                   backbone_feat_channel=backbone_feat_channel,
                                    hidden_dim=channel_dim,
                                    growth_rate=4)
 
@@ -61,9 +62,11 @@ class STTR(nn.Module):
         occ_mask_right = data['occ_mask_right'].bool()
         bz, _, h, w = left.size()
 
+        src_stereo = torch.cat([left, right], dim=0)
         # [2bz, 128, H/16, W/16], [2bz, 128, H/8, W/8], [2bz, 64, H/4, W/4], [2bz, 3, H, W]
-        features = self.backbone(left, right)
-        tokens = self.tokenizer(features)  # [2bz, C, H, W]
+        features = self.backbone(src_stereo)
+        t_inputs = [features['scale4'], features['scale3'], features['scale2'], src_stereo]
+        tokens = self.tokenizer(t_inputs)  # [2bz, C, H, W]
 
         # 下采样
         if self.downsample > 0:

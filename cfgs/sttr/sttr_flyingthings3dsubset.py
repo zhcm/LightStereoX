@@ -7,6 +7,7 @@ from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.sttr.sttr import STTR, get_model_params
+from stereo.modeling.models.sttr.sttr_utils.backbone import SppBackbone
 from stereo.solver.build import ClipGradNorm
 from stereo.solver.warmup import LinearWarmup
 
@@ -44,7 +45,9 @@ val_loader = LazyCall(build_dataloader)(
     pin_memory=True)
 
 # model
-model = LazyCall(STTR)()
+model = LazyCall(STTR)(
+    backbone=LazyCall(SppBackbone)()
+)
 
 # optim
 lr = 0.0008
