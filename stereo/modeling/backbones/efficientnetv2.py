@@ -7,10 +7,10 @@ import torch.nn as nn
 class EfficientNetV2(nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
-        model = timm.create_model('efficientnetv2_rw_s', pretrained=pretrained, features_only=True)
+        model = timm.create_model('efficientnetv2_rw_s', pretrained=pretrained)
         self.conv_stem = model.conv_stem
         self.bn1 = model.bn1
-        # self.act1 = model.act1
+        self.act1 = model.act1
         self.block0 = model.blocks[0]
         self.block1 = model.blocks[1]
         self.block2 = model.blocks[2]
@@ -20,7 +20,7 @@ class EfficientNetV2(nn.Module):
     def forward(self, images):
         c1 = self.conv_stem(images)  # [bz, 24, H/2, W/2]
         c1 = self.bn1(c1)
-        # c1 = self.act1(c1)
+        c1 = self.act1(c1)
         c1 = self.block0(c1)  # [bz, 24, H/2, W/2]
         c2 = self.block1(c1)  # [bz, 48, H/4, W/4]
         c3 = self.block2(c2)  # [bz, 64, H/8, W/8]

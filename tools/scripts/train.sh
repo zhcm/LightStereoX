@@ -8,6 +8,7 @@ PY_ARGS=${@:2}
 
 # 环境变量
 export TORCH_HOME='/mnt/nas/algorithm/chenming.zhang/.cache/torch'
+export HF_HOME='/mnt/nas/algorithm/chenming.zhang/.cache/huggingface'
 export PYTHONPATH="./:$PYTHONPATH"
 export HF_ENDPOINT='https://hf-mirror.com'
 
