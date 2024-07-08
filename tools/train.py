@@ -55,6 +55,7 @@ def main():
         os.makedirs(ckpt_dir, exist_ok=True)
         common_utils.backup_source_code(os.path.join(output_dir, 'code'))
         os.system('cp %s %s' % (args.cfg_file, output_dir))
+        LazyConfig.save(cfg, os.path.join(output_dir, "config.yaml"))
     if args.dist_mode:
         dist.barrier()
 

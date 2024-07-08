@@ -30,7 +30,7 @@ def create_logger(log_file=None, rank=0):
     console.setFormatter(formatter)
     logger.addHandler(console)
 
-    if log_file is not None:
+    if log_file is not None and rank == 0:
         file_handler = logging.FileHandler(filename=log_file)
         file_handler.setLevel(logging.INFO if rank == 0 else logging.ERROR)
         file_handler.setFormatter(formatter)
