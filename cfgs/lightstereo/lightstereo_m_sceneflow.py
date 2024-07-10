@@ -1,5 +1,6 @@
 # @Time    : 2024/6/9 12:32
 # @Author  : zhangchenming
+import os
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -10,7 +11,7 @@ from stereo.modeling.backbones.mobilenet import MobileNetV2
 from stereo.modeling.models.lightstereo.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params
+from cfgs.common.runtime_params import runtime_params, project_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -73,7 +74,6 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
-runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                'SceneFlowDataset/LightStereo_M')
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_M')
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True

@@ -1,15 +1,17 @@
 # @Time    : 2024/6/9 12:32
 # @Author  : zhangchenming
+import os
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.lightfast.lightstereo import LightStereo
+from stereo.modeling.backbones.mobilenet import MobileNetV2
+from stereo.modeling.models.lightstereo.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params
+from cfgs.common.runtime_params import runtime_params, project_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -46,6 +48,7 @@ val_loader = LazyCall(build_dataloader)(
 
 # model
 model = LazyCall(LightStereo)(
+    backbone=LazyCall(MobileNetV2)(),
     max_disp=192,
     aggregation_blocks=[1, 2, 4],
     expanse_ratio=4,
@@ -66,11 +69,9 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # train params
-runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                'KittiDataset/LightStereo_S')
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/KittiDataset/LightStereo_S')
 runtime_params.train_epochs = 500
 runtime_params.eval_period = 100
 runtime_params.max_ckpt_save_num = 100
-runtime_params.pretrained_model = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                   'SceneFlowDataset/LightStereo_S/cesc/ckpt/epoch_89/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_S/cesc/ckpt/epoch_89/pytorch_model.bin')
 runtime_params.mixed_precision = True
