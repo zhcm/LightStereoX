@@ -1,13 +1,15 @@
 # @Time    : 2024/6/22 00:56
 # @Author  : zhangchenming
+import os
 from stereo.config.lazy import LazyCall
 from stereo.datasets.eth3d_dataset import ETH3DDataset
 from stereo.datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 
+from cfgs.common.runtime_params import data_root_dir
 from cfgs.common.constants import constants
 
-data_root_path = '/mnt/nas/algorithm/chenming.zhang/dataset/ETH3D'
+data_root_path = os.path.join(data_root_dir, 'ETH3D')
 
 trainval = LazyCall(ETH3DDataset)(
     data_root_path=data_root_path,
