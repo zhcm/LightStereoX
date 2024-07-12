@@ -3,14 +3,49 @@
 import os
 import numpy as np
 from PIL import Image
+from pathlib import Path
 from .utils.readpfm import readpfm
 from .dataset_template import DatasetTemplate
 
 
+def read_extrinsics(path, fid):
+    with open(path) as f:
+        line = f.readline()
+        while line:
+            if "Frame" in line:
+                if fid == int(line[6:]):
+                    line = f.readline()
+                    left_extrinsics = np.array(line[2:])
+                    line = f.readline()
+                    right_extrinsics = np.array(line[2:])
+                    return left_extrinsics, right_extrinsics
+            line = f.readline()
+        return None
+
+
 class SceneFlowDataset(DatasetTemplate):
-    def __init__(self, data_root_path, split_file, augmentations, return_right_disp):
+    def __init__(self, data_root_path, split_file, augmentations, return_right_disp, with_camera_data=False):
         super().__init__(data_root_path, split_file, augmentations)
         self.return_right_disp = return_right_disp
+        self.with_camera_data = with_camera_data
+
+        if self.with_camera_data:
+            sample_list = []
+            for each in self.data_list:
+                full_paths = [os.path.join(self.root, x) for x in each[0:3]]
+                left_img_path, right_img_path, disp_img_path = full_paths
+                if "15mm" in left_img_path:
+                    intrinsics = np.array([[450.0, 0.0, 479.5], [0.0, 450.0, 269.5], [0.0, 0.0, 1.0]]).astype(np.float32)
+                else:
+                    intrinsics = np.array([[1050.0, 0.0, 479.5], [0.0, 1050.0, 269.5], [0.0, 0.0, 1.0]]).astype(np.float32)
+                camera_data_file = Path(disp_img_path.replace('disparity', 'camera_data')).parent.parent / 'camera_data.txt'
+                extrinsics = read_extrinsics(camera_data_file, int(Path(left_img_path).stem))
+                if extrinsics is None:
+                    continue
+                else:
+                    left_extrinsics, right_extrinsics = extrinsics
+                sample_list.append([*each[0:3], intrinsics, left_extrinsics, right_extrinsics])
+            self.data_list = sample_list
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
@@ -34,9 +69,15 @@ class SceneFlowDataset(DatasetTemplate):
             sample['disp_right'] = disp_img_right
             assert not np.isnan(disp_img_right).any(), 'disp_img_right has nan'
 
-        for t in self.augmentations:
-            sample = t(sample)
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
 
+        left_extrinsics = np.fromstring(str(item[5]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
+        right_extrinsics = np.fromstring(str(item[6]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
+        sample['intrinsics'] = item[4]
+        sample['left_extrinsics'] = left_extrinsics
+        sample['right_extrinsics'] = right_extrinsics
         sample['index'] = idx
         sample['name'] = left_img_path
         return sample
