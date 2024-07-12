@@ -73,9 +73,9 @@ class SceneFlowDataset(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
-        left_extrinsics = np.fromstring(str(item[5]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
-        right_extrinsics = np.fromstring(str(item[6]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
-        sample['intrinsics'] = item[4]
+        left_extrinsics = np.fromstring(str(item[4]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
+        right_extrinsics = np.fromstring(str(item[5]), dtype=float, sep=' ').astype(np.float32).reshape((4, 4))
+        sample['intrinsics'] = item[3]
         sample['left_extrinsics'] = left_extrinsics
         sample['right_extrinsics'] = right_extrinsics
         sample['index'] = idx
