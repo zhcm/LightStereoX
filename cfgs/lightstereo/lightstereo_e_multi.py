@@ -1,5 +1,6 @@
 # @Time    : 2024/6/9 12:32
 # @Author  : zhangchenming
+import os
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -10,33 +11,35 @@ from stereo.modeling.backbones.efficientnetv2 import EfficientNetV2
 from stereo.modeling.models.lightstereo.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params
+from cfgs.common.runtime_params import runtime_params, project_root_dir
 from cfgs.common.constants import constants
 
 # dataset
-train_augmentations = [
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-]
-train_augmentations_full = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.15, 0.15],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_scale=0.85, max_scale=1.3,
-                                       scale_prob=0.8, stretch_prob=0.8),
+augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
+kitti12 = LazyConfig.load('cfgs/common/datasets/kitti12.py')
+kitti12.trainval.augmentations = augmentations
+kitti12.trainval.return_right_disp = False
+
+kitti15 = LazyConfig.load('cfgs/common/datasets/kitti15.py')
+kitti15.trainval.augmentations = augmentations
+kitti15.trainval.return_right_disp = False
+
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = train_augmentations_full
+sceneflow.train.augmentations = augmentations
+sceneflow.train.return_right_disp = False
+
+drivingstereo = LazyConfig.load('cfgs/common/datasets/drivingstereo.py')
+drivingstereo.train.augmentations = augmentations
 
 # dataloader
 batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sceneflow.train],
+    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train, drivingstereo.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -72,8 +75,9 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
-# runtime params
-runtime_params.save_root_dir = ('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/'
-                                'SceneFlowDataset/LightStereo_LX')
+# train params
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MultiDataset/LightStereo_E')
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True
+runtime_params.use_sync_bn = False
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_E/cesc/ckpt/epoch_89/pytorch_model.bin')
