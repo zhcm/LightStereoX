@@ -94,8 +94,8 @@ def main():
         os.makedirs(kitti12_result_dir)
     infer_and_save(kitti12_test_loader, model, local_rank, cfg, logger, kitti12_result_dir)
 
-    logger.info(kitti15_result_dir)
-    logger.info(kitti12_result_dir)
+    logger.info(os.path.abspath(kitti15_result_dir))
+    logger.info(os.path.abspath(kitti12_result_dir))
 
 
 if __name__ == '__main__':
