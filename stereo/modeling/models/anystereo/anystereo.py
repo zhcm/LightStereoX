@@ -10,7 +10,7 @@ from .neck import Neck, FPNLayer
 from .aggregation import Aggregation
 
 
-class LightStereo(nn.Module):
+class AnyStereo(nn.Module):
     def __init__(self, backbone, max_disp, aggregation_blocks, expanse_ratio, left_att=True):
         super().__init__()
         self.max_disp = max_disp
@@ -65,7 +65,11 @@ class LightStereo(nn.Module):
         features_right = [feat[bz:] for feat in features]
 
         cost_volume = correlation_volume(features_left[0], features_right[0], self.max_disp // 4)
-        encoding_volume = self.cost_agg(cost_volume, features_left)  # [bz, 1, max_disp/4, H/4, W/4]
+
+        intrinsics = data['intrinsics'].reshape(bz, -1)
+        baseline = data['baseline'].unsqueeze(-1)
+        extra_info = torch.cat([intrinsics, baseline], -1)
+        encoding_volume = self.cost_agg(cost_volume, features_left, extra_info)  # [bz, 1, max_disp/4, H/4, W/4]
 
         prob = F.softmax(encoding_volume[0].squeeze(1), dim=1)  # [bz, max_disp/4, H/4, W/4]
         init_disp = disparity_regression(prob, self.max_disp // 4)  # [bz, 1, H/4, W/4]

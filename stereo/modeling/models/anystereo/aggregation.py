@@ -42,8 +42,16 @@ class Aggregation(nn.Module):
             self.att2 = AttentionModule(in_channels * 2, backbone_dims[1])
             self.att4 = AttentionModule(in_channels * 4, backbone_dims[2])
 
-    def forward(self, x, features_left):
+        self.mlp = nn.Sequential(
+            nn.Linear(10, 48),
+            nn.LayerNorm(48),
+            nn.ReLU()
+        )
+
+    def forward(self, x, features_left, extra_info):
         x = self.conv0(x)
+        extra = self.mlp(extra_info).unsqueeze(-1).unsqueeze(-1)
+        x = x * extra
         if self.left_att:
             x = self.att0(x, features_left[0])
 

@@ -1,23 +1,23 @@
 # @Time    : 2024/3/10 10:21
 # @Author  : zhangchenming
-import timm
 import torch
 import torch.nn as nn
-
-from functools import partial
-from .basic_block_2d import BasicConv2d, BasicDeconv2d
 
 
 class FPNLayer(nn.Module):
     def __init__(self, chan_low, chan_high):
         super().__init__()
-        self.deconv = BasicDeconv2d(chan_low, chan_high, kernel_size=4, stride=2, padding=1,
-                                    norm_layer=nn.BatchNorm2d,
-                                    act_layer=partial(nn.LeakyReLU, negative_slope=0.2, inplace=True))
+        self.deconv = nn.Sequential(
+            nn.ConvTranspose2d(chan_low, chan_high, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(chan_high),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        )
 
-        self.conv = BasicConv2d(chan_high * 2, chan_high, kernel_size=3, padding=1,
-                                norm_layer=nn.BatchNorm2d,
-                                act_layer=partial(nn.LeakyReLU, negative_slope=0.2, inplace=True))
+        self.conv = nn.Sequential(
+            nn.Conv2d(chan_high * 2, chan_high, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(chan_high),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        )
 
     def forward(self, low, high):
         low = self.deconv(low)
@@ -33,9 +33,10 @@ class Neck(nn.Module):
         self.fpn_layer3 = FPNLayer(channels[2], channels[1])
         self.fpn_layer2 = FPNLayer(channels[1], channels[0])
 
-        self.out_conv = BasicConv2d(channels[0], channels[0],
-                                    kernel_size=3, padding=1, padding_mode="replicate",
-                                    norm_layer=nn.InstanceNorm2d)
+        self.out_conv = nn.Sequential(
+            nn.Conv2d(channels[0], channels[0], kernel_size=3, padding=1, padding_mode="replicate", bias=False),
+            nn.InstanceNorm2d(channels[0])
+        )
 
     def forward(self, features):
         c2, c3, c4, c5 = features
