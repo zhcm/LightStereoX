@@ -11,6 +11,14 @@ from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'KITTI/stereo_2012')
 
+train = LazyCall(KittiDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/KITTI2012/kitti12_train180.txt',
+    augmentations=None,
+    return_right_disp=True,
+    use_noc=False
+)
+
 trainval = LazyCall(KittiDataset)(
     data_root_path=data_root_path,
     split_file='./data/KITTI2012/kitti12_train194.txt',
