@@ -5,6 +5,25 @@ from PIL import Image
 from .dataset_template import DatasetTemplate
 
 
+def read_calib_file(path):
+    # taken from https://github.com/hunse/kitti
+    float_chars = set("0123456789.e+- ")
+    data = {}
+    with open(path, 'r') as f:
+        for line in f.readlines():
+            key, value = line.split(':', 1)
+            value = value.strip()
+            data[key] = value
+            if float_chars.issuperset(value):
+                # try to cast to float array
+                try:
+                    data[key] = np.array(value.split(' '), dtype='float32')
+                except ValueError:
+                    # casting error: data[key] already eq. value, so pass
+                    pass
+    return data
+
+
 class KittiDataset(DatasetTemplate):
     def __init__(self, data_root_path, split_file, augmentations, return_right_disp, use_noc):
         super().__init__(data_root_path, split_file, augmentations)
@@ -33,11 +52,22 @@ class KittiDataset(DatasetTemplate):
             disp_img_right = np.array(Image.open(disp_img_right_path), dtype=np.float32) / 256.0
             sample['disp_right'] = disp_img_right
 
-        for t in self.augmentations:
-            sample = t(sample)
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
 
         sample['index'] = idx
         sample['name'] = left_img_path
+
+        if '2012' in self.root:
+            cam2cam = read_calib_file(left_img_path[:-7].replace('colored_0', 'calib') + '.txt')
+            intrinsics = cam2cam['P2'].reshape(3, 4)[:3, :3]
+        else:
+            cam2cam = read_calib_file(left_img_path[:-7].replace('image_2', 'calib_cam_to_cam') + '.txt')
+            intrinsics = cam2cam['P_rect_02'].reshape(3, 4)[:3, :3]
+
+        sample['intrinsics'] = intrinsics
+        sample['baseline'] = np.array(54 * 10).astype(np.float32)
 
         return sample
 
