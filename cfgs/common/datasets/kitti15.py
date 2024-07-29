@@ -19,6 +19,17 @@ train = LazyCall(KittiDataset)(
     use_noc=False
 )
 
+val = LazyCall(KittiDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/KITTI2015/kitti15_val20.txt',
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[384, 1248], mode='tr'),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ],
+    return_right_disp=True,
+    use_noc=False
+)
+
 trainval = LazyCall(KittiDataset)(
     data_root_path=data_root_path,
     split_file='./data/KITTI2015/kitti15_train200.txt',
