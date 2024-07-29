@@ -48,7 +48,7 @@ def get_disp(file_path, checkinvalid=True):
         raise TypeError('only support png and npy format, invalid type found: {}'.format(file_path))
 
     f = 725.0087
-    b = 0.532725 # meter
+    b = 0.532725  # meter
 
     disp = b * f / (depth + 1e-5)
     if checkinvalid:
