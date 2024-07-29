@@ -16,26 +16,37 @@ from cfgs.common.constants import constants
 
 # dataset
 train_augmentations = [
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 672]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = train_augmentations
+sceneflow.train.return_right_disp = False
 
 kitti12 = LazyConfig.load('cfgs/common/datasets/kitti12.py')
-kitti12.trainval.augmentations = train_augmentations
-kitti12.trainval.return_right_disp = False
+kitti12.train.augmentations = train_augmentations
+kitti12.train.return_right_disp = False
 
 kitti15 = LazyConfig.load('cfgs/common/datasets/kitti15.py')
-kitti15.trainval.augmentations = train_augmentations
-kitti15.trainval.return_right_disp = False
+kitti15.train.augmentations = train_augmentations
+kitti15.train.return_right_disp = False
+
+middlebury = LazyConfig.load('cfgs/common/datasets/middlebury.py')
+middlebury.trainval.augmentations = train_augmentations
+
+eth3d = LazyConfig.load('cfgs/common/datasets/eth3d.py')
+eth3d.trainval.augmentations = train_augmentations
+
+fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')
+fallingthings.train.augmentations = train_augmentations
+fallingthings.train.return_right_disp = False
 
 # dataloader
-batch_size_per_gpu = 24*4
+batch_size_per_gpu = 24
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train],
+    all_dataset=[kitti12.train, kitti15.train, sceneflow.train, middlebury.trainval, eth3d.trainval, fallingthings.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -44,7 +55,7 @@ train_loader = LazyCall(build_dataloader)(
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.val],
-    batch_size=batch_size_per_gpu//2,
+    batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
     pin_memory=True)

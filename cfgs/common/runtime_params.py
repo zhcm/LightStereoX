@@ -26,5 +26,5 @@ runtime_params = OmegaConf.create(
     )
 )
 
-project_root_dir = '/evad-lab/pnc-dataset-lab/chenming.zhang/code/LightStereoX/'
-data_root_dir = '/evad-lab/pnc-dataset-lab/chenming.zhang/dataset/'
+project_root_dir = '/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/'
+data_root_dir = '/mnt/nas/algorithm/chenming.zhang/dataset/'
