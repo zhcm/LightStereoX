@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'DrivingStereo')
 
 train = LazyCall(DrivingDataset)(
     data_root_path=data_root_path,
-    split_file='./data/DrivingStereo/driving_stereo_train.txt',
+    split_file='./data/DrivingStereo/driving_stereo_train_174437.txt',
     augmentations=None
 )
 

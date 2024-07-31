@@ -13,13 +13,13 @@ data_root_path = os.path.join(data_root_dir, 'Sintel')
 
 train = LazyCall(SintelDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Sintel/Sintel_final_train.txt',
+    split_file='./data/Sintel/sintel_final_train_957.txt',
     augmentations=None
 )
 
 val = LazyCall(SintelDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Sintel/Sintel_final_val.txt',
+    split_file='./data/Sintel/sintel_final_val.txt',
     augmentations=[
         LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)

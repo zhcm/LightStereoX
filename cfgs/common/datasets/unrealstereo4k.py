@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'UnrealStereo4K')
 
 train = LazyCall(UnrealStereo4KDataset)(
     data_root_path=data_root_path,
-    split_file='./data/UnrealStereo4K/unrealstereo4k_train.txt',
+    split_file='./data/UnrealStereo4K/unrealstereo4k_train_7380.txt',
     augmentations=None,
     return_right_disp=True
 )

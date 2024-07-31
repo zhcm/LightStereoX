@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'VirtualKITTI2')
 
 train = LazyCall(VirtualKitti2Dataset)(
     data_root_path=data_root_path,
-    split_file='./data/VirtualKitti2/virtualkitti2_train.txt',
+    split_file='./data/VirtualKitti2/virtualkitti2_train_19134.txt',
     augmentations=None,
     return_right_disp=True
 )

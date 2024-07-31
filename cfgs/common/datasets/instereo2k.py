@@ -13,14 +13,14 @@ data_root_path = os.path.join(data_root_dir, 'InStereo2K')
 
 train = LazyCall(InStereo2KDataset)(
     data_root_path=data_root_path,
-    split_file='./data/InStereo2K/InStereo2K_train.txt',
+    split_file='./data/InStereo2K/instereo2k_train_2010.txt',
     augmentations=None,
     return_right_disp=True
 )
 
 val = LazyCall(InStereo2KDataset)(
     data_root_path=data_root_path,
-    split_file='./data/InStereo2K/InStereo2K_test.txt',
+    split_file='./data/InStereo2K/instereo2k_test.txt',
     augmentations=[
         LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)

@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'CREStereoData')
 
 train = LazyCall(CREStereoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/CREStereo/crestereo_train.txt',
+    split_file='./data/CREStereo/crestereo_train_180000.txt',
     augmentations=None,
     return_right_disp=True
 )
