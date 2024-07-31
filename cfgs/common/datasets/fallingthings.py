@@ -10,7 +10,7 @@ data_root_path = os.path.join(data_root_dir, 'FallingThings')
 
 train = LazyCall(FallingThingsDataset)(
     data_root_path=data_root_path,
-    split_file='./data/FallingThings/fat_all.txt',
+    split_file='./data/FallingThings/fat_train.txt',
     augmentations=None,
     return_right_disp=True
 )
