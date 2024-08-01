@@ -22,7 +22,7 @@ def groupwise_correlation(fea1, fea2, num_groups):
     return cost
 
 
-def gwc_volume(refimg_fea, targetimg_fea, maxdisp, num_groups):
+def build_gwc_volume(refimg_fea, targetimg_fea, maxdisp, num_groups):
     B, C, H, W = refimg_fea.shape
     volume = refimg_fea.new_zeros([B, num_groups, maxdisp, H, W])
     for i in range(maxdisp):
@@ -34,7 +34,7 @@ def gwc_volume(refimg_fea, targetimg_fea, maxdisp, num_groups):
     return volume
 
 
-def concat_volume(refimg_fea, targetimg_fea, maxdisp):
+def build_concat_volume(refimg_fea, targetimg_fea, maxdisp):
     B, C, H, W = refimg_fea.shape
     volume = refimg_fea.new_zeros([B, 2 * C, maxdisp, H, W], requires_grad=False)
     for i in range(maxdisp):
