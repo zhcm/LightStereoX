@@ -19,7 +19,7 @@ train = LazyCall(DrivingDataset)(
 
 val = LazyCall(DrivingDataset)(
     data_root_path=data_root_path,
-    split_file='./data/DrivingStereo/driving_stereo_full_test.txt',
+    split_file='./data/DrivingStereo/driving_stereo_full_test_7751.txt',
     augmentations=[
         LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)

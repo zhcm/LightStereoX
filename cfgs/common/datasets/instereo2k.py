@@ -20,11 +20,12 @@ train = LazyCall(InStereo2KDataset)(
 
 val = LazyCall(InStereo2KDataset)(
     data_root_path=data_root_path,
-    split_file='./data/InStereo2K/instereo2k_test.txt',
+    split_file='./data/InStereo2K/instereo2k_test_50.txt',
     augmentations=[
-        LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
+        LazyCall(stereo_trans.DivisiblePad)(divisor=32, mode='round'),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-    ]
+    ],
+    return_right_disp=False
 )
 
 val_loader = LazyCall(build_dataloader)(

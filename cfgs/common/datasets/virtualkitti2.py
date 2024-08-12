@@ -20,16 +20,17 @@ train = LazyCall(VirtualKitti2Dataset)(
 
 val = LazyCall(VirtualKitti2Dataset)(
     data_root_path=data_root_path,
-    split_file='./data/VirtualKitti2/virtualkitti2_val.txt',
+    split_file='./data/VirtualKitti2/virtualkitti2_val_2126.txt',
     augmentations=[
-        LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
+        LazyCall(stereo_trans.DivisiblePad)(divisor=32, mode='round'),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-    ]
+    ],
+    return_right_disp=False
 )
 
 val_loader = LazyCall(build_dataloader)(
     all_dataset=[val],
-    batch_size=1,
+    batch_size=4,
     workers=8,
     pin_memory=True,
     shuffle=False)

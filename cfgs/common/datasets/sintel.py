@@ -19,9 +19,9 @@ train = LazyCall(SintelDataset)(
 
 val = LazyCall(SintelDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Sintel/sintel_final_val.txt',
+    split_file='./data/Sintel/sintel_final_val_107.txt',
     augmentations=[
-        LazyCall(stereo_trans.CropOrPad)(size=[800, 1760]),
+        LazyCall(stereo_trans.DivisiblePad)(divisor=32, mode='round'),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
     ]
 )
