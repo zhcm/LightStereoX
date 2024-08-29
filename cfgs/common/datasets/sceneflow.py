@@ -30,7 +30,7 @@ val = LazyCall(SceneFlowDataset)(
 
 val_loader = LazyCall(build_dataloader)(
     all_dataset=[val],
-    batch_size=12,
+    batch_size=1,
     shuffle=False,
     workers=8,
     pin_memory=True)

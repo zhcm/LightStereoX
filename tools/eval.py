@@ -19,6 +19,7 @@ def parse_config():
     parser.add_argument('--dist_mode', action='store_true', default=False, help='torchrun ddp multi gpu')
     parser.add_argument('--cfg_file', type=str, default=None, required=True, help='specify the config for eval')
     parser.add_argument('--eval_data_cfg_file', type=str, default=None)
+    parser.add_argument('--eval_batch_size', type=int, default=1)
     parser.add_argument('--pretrained_model', type=str, default=None, required=True, help='pretrained_model')
 
     args = parser.parse_args()
@@ -28,6 +29,7 @@ def parse_config():
     cfg.runtime_params.pretrained_model = args.pretrained_model
     if args.eval_data_cfg_file:
         cfg.val_loader = LazyConfig.load(args.eval_data_cfg_file).val_loader
+        cfg.val_loader.batch_size = args.eval_batch_size
 
     args.run_mode = 'eval'
     return args, cfg
