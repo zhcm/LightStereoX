@@ -56,11 +56,10 @@ class NormalizeImage(object):
         self.std = np.array(std, dtype=np.float32)
 
     def __call__(self, sample):
-        sample['left'] = (sample['left'] - self.mean) / self.std
-        sample['right'] = (sample['right'] - self.mean) / self.std
-
-        sample['left'] = sample['left'].transpose((2, 0, 1))
-        sample['right'] = sample['right'].transpose((2, 0, 1))
+        for k in sample.keys():
+            if k in ['left', 'right', 'left_fl', 'right_fl']:
+                sample[k] = (sample[k] - self.mean) / self.std
+                sample[k] = sample[k].transpose((2, 0, 1))
         return sample
 
 
@@ -90,7 +89,7 @@ class ConstantPad(object):
 
         # apply pad for left, right, disp image, and occ mask
         for k in sample.keys():
-            if k in ['left', 'right']:
+            if k in ['left', 'right', 'left_fl', 'right_fl']:
                 pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
                 sample[k] = np.pad(sample[k], pad_width, 'edge')
 

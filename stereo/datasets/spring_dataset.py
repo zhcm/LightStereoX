@@ -51,3 +51,35 @@ class SpringDataset(DatasetTemplate):
             if "disparity" not in f.keys():
                 raise IOError(f"File {filename} does not have a 'disparity' key. Is this a valid dsp5 file?")
             return f["disparity"][()]
+
+
+class SpringTestDataset(DatasetTemplate):
+    def __init__(self, data_root_path, split_file, augmentations):
+        super().__init__(data_root_path, split_file, augmentations)
+
+    def __getitem__(self, idx):
+        item = self.data_list[idx]
+        full_paths = [os.path.join(self.root, x) for x in item]
+        left_path, right_path = full_paths
+
+        left_img = Image.open(left_path).convert('RGB')
+        left_img = np.array(left_img, dtype=np.float32)
+
+        right_img = Image.open(right_path).convert('RGB')
+        right_img = np.array(right_img, dtype=np.float32)
+
+        sample = {
+            'left': left_img,
+            'right': right_img,
+            'left_fl': np.fliplr(left_img),
+            'right_fl': np.fliplr(right_img)
+        }
+
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
+
+        sample['index'] = idx
+        sample['name'] = item[0]
+
+        return sample

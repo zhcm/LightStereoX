@@ -2,7 +2,7 @@
 # @Author  : zhangchenming
 import os
 from stereo.config.lazy import LazyCall
-from stereo.datasets.spring_dataset import SpringDataset
+from stereo.datasets.spring_dataset import SpringDataset, SpringTestDataset
 from stereo.datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 
@@ -18,14 +18,13 @@ train = LazyCall(SpringDataset)(
     return_right_disp=True
 )
 
-test = LazyCall(SpringDataset)(
+test = LazyCall(SpringTestDataset)(
     data_root_path=data_root_path,
     split_file='./data/Spring/spring_test.txt',
     augmentations=[
-        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.ConstantPad)(target_size=[1088, 1920]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
     ],
-    return_right_disp=True
 )
 
 test_loader = LazyCall(build_dataloader)(
