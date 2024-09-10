@@ -52,7 +52,6 @@ def infer_and_save(dataloader, model, local_rank, cfg, logger, sprint_disp_dir):
         os.makedirs(os.path.dirname(left_submit_path), exist_ok=True)
 
         # save
-        left_disp_pred = left_disp_pred * 16
         flow_io.writeDispFile(left_disp_pred, left_submit_path)
 
         # right infer
@@ -70,7 +69,6 @@ def infer_and_save(dataloader, model, local_rank, cfg, logger, sprint_disp_dir):
         os.makedirs(os.path.dirname(right_submit_path), exist_ok=True)
 
         # save
-        right_disp_pred = right_disp_pred * 16
         flow_io.writeDispFile(right_disp_pred, right_submit_path)
 
         message = 'Iter:{:>4d}/{}'.format(i, len(dataloader))
