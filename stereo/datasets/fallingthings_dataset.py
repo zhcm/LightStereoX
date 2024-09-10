@@ -43,24 +43,6 @@ class FallingThingsDataset(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
-        calib_path = Path(left_path).parent.joinpath('_camera_settings.json')
-        with open(calib_path, 'r') as file:
-            calib = json.load(file)
-            camera = calib['camera_settings'][0]
-            intrinsic = camera['intrinsic_settings']
-            fx = intrinsic['fx']
-            fy = intrinsic['fy']
-            cx = intrinsic['cx']
-            cy = intrinsic['cy']
-            s = intrinsic['s']
-            intrinsics = np.array([
-                [fx, s, cx],
-                [0, fy, cy],
-                [0, 0, 1]
-            ]).astype(np.float32)
-            sample['intrinsics'] = intrinsics
-
-        sample['baseline'] = np.array(6 * 10).astype(np.float32)
         sample['index'] = idx
         sample['name'] = left_path
 

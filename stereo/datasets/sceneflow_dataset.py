@@ -38,13 +38,6 @@ class SceneFlowDataset(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
-        if "15mm" in left_img_path:
-            intrinsics = np.array([[450.0, 0.0, 479.5], [0.0, 450.0, 269.5], [0.0, 0.0, 1.0]]).astype(np.float32)
-        else:
-            intrinsics = np.array([[1050.0, 0.0, 479.5], [0.0, 1050.0, 269.5], [0.0, 0.0, 1.0]]).astype(np.float32)
-        sample['intrinsics'] = intrinsics
-        sample['baseline'] = np.array(54 * 10).astype(np.float32)
-
         sample['index'] = idx
         sample['name'] = left_img_path
         return sample
