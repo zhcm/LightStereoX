@@ -28,8 +28,9 @@ class DrivingDataset(DatasetTemplate):
             'disp': disp_img
         }
 
-        for t in self.augmentations:
-            sample = t(sample)
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
 
         sample['index'] = idx
         sample['name'] = left_img_path

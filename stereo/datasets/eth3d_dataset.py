@@ -32,8 +32,9 @@ class ETH3DDataset(DatasetTemplate):
             'occ_mask': occ_mask
         }
 
-        for t in self.augmentations:
-            sample = t(sample)
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
 
         calib_path = Path(left_img_path).parent.joinpath('calib.txt')
         with open(calib_path) as f:
