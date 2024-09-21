@@ -21,11 +21,13 @@ class UnrealStereo4KDataset(DatasetTemplate):
         right_img = np.array(right_img, dtype=np.float32)
 
         disp_left = np.load(disp_left_path, mmap_mode='c')
+        occ_mask = np.zeros_like(disp_left, dtype=bool)
 
         sample = {
             'left': left_img,
             'right': right_img,
-            'disp': disp_left
+            'disp': disp_left,
+            'occ_mask': occ_mask
         }
 
         if self.return_right_disp:

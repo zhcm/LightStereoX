@@ -20,18 +20,21 @@ class VirtualKitti2Dataset(DatasetTemplate):
         right_img = np.array(right_img, dtype=np.float32)
         disp_img = get_disp(disp_img_path).astype(np.float32)
         assert not np.isnan(disp_img).any(), 'disp_img has nan'
+        occ_mask = np.zeros_like(disp_img, dtype=bool)
         sample = {
             'left': left_img,  # [H, W, 3]
             'right': right_img,  # [H, W, 3]
             'disp': disp_img,  # [H, W]
+            'occ_mask': occ_mask
         }
         if self.return_right_disp:
             disp_img_right = get_disp(disp_img_right_path).astype(np.float32)
             sample['disp_right'] = disp_img_right
             assert not np.isnan(disp_img_right).any(), 'disp_img_right has nan'
 
-        for t in self.augmentations:
-            sample = t(sample)
+        if self.augmentations is not None:
+            for t in self.augmentations:
+                sample = t(sample)
 
         sample['index'] = idx
         sample['name'] = left_img_path

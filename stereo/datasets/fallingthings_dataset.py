@@ -25,11 +25,13 @@ class FallingThingsDataset(DatasetTemplate):
         left_depth = Image.open(left_disp_path)
         left_depth = np.array(left_depth, dtype=np.float32)
         left_disp = 460920 / left_depth  # 6cm * 768.2px * 100 = 460920
+        occ_mask = np.zeros_like(left_disp, dtype=bool)
         
         sample = {
             'left': left_img,
             'right': right_img,
             'disp': left_disp,
+            'occ_mask': occ_mask
         }
 
         if self.return_right_disp:
