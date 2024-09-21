@@ -64,3 +64,5 @@ test_loader = LazyCall(build_dataloader)(
     workers=8,
     pin_memory=True,
     shuffle=False)
+
+# trainval (374, 1238, 3), (375, 1242, 3), (376, 1241, 3), (370, 1224, 3)

@@ -34,3 +34,5 @@ val_loader = LazyCall(build_dataloader)(
     shuffle=False,
     workers=8,
     pin_memory=True)
+
+# (540, 960, 3)
