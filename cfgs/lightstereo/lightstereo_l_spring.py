@@ -17,7 +17,7 @@ from cfgs.common.constants import constants
 # dataset
 augmentations = [
     LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.7, 1.3], contrast=[0.7, 1.3], saturation=[0.7, 1.3], hue=[-0.1, 0.1]),
-    LazyCall(stereo_trans.RandomScale)(crop_size=[544, 960], min_scale=0.8, max_scale=1.3, scale_prob=0.5, stretch_prob=0.0),
+    LazyCall(stereo_trans.RandomScale)(crop_size=[544, 960], min_scale=0.8, max_scale=1.5, scale_prob=0.7, stretch_prob=0.0),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[544, 960]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
@@ -25,7 +25,7 @@ spring = LazyConfig.load('cfgs/common/datasets/spring.py')
 spring.train.augmentations = augmentations
 
 # dataloader
-batch_size_per_gpu = 8
+batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[spring.train],
@@ -46,8 +46,8 @@ val_loader = LazyCall(build_dataloader)(
 model = LazyCall(LightStereo)(
     backbone=LazyCall(MobileNetV2)(),
     max_disp=192,
-    aggregation_blocks=[4, 8, 16],
-    expanse_ratio=4,
+    aggregation_blocks=[8, 16, 32],
+    expanse_ratio=8,
     left_att=True)
 
 # optim
@@ -65,9 +65,9 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # train params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpringDataset/LightStereo_M')
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpringDataset/LightStereo_L')
 runtime_params.train_epochs = 100
 runtime_params.eval_period = 100
 runtime_params.max_ckpt_save_num = 100
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_M/cesc/ckpt/epoch_89/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_L/cesc/ckpt/epoch_89/pytorch_model.bin')
 runtime_params.mixed_precision = True

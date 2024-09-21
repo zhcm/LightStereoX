@@ -16,8 +16,7 @@ from cfgs.common.constants import constants
 
 # dataset
 augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.7, 1.3], contrast=[0.7, 1.3],
-                                             saturation=[0.7, 1.3], hue=[-0.1, 0.1]),
+    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.7, 1.3], contrast=[0.7, 1.3], saturation=[0.7, 1.3], hue=[-0.1, 0.1]),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
     LazyCall(stereo_trans.RandomSparseScale)(crop_size=[320, 736], min_scale=0.9, max_scale=1.3, prob=0.8),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),

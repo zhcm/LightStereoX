@@ -15,31 +15,39 @@ from cfgs.common.runtime_params import runtime_params, project_root_dir
 from cfgs.common.constants import constants
 
 # dataset
-augmentations = [
+train_augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-kitti12 = LazyConfig.load('cfgs/common/datasets/kitti12.py')
-kitti12.trainval.augmentations = augmentations
-kitti12.trainval.return_right_disp = False
+fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # (540, 960, 3)
+fallingthings.train.augmentations = train_augmentations
+fallingthings.train.return_right_disp = False
 
-kitti15 = LazyConfig.load('cfgs/common/datasets/kitti15.py')
-kitti15.trainval.augmentations = augmentations
-kitti15.trainval.return_right_disp = False
+instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # (860, 1080, 3)
+instereo2k.train.augmentations = train_augmentations
+instereo2k.train.return_right_disp = False
 
-sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = augmentations
+sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # (540, 960, 3)
+sceneflow.train.augmentations = train_augmentations
 sceneflow.train.return_right_disp = False
 
-drivingstereo = LazyConfig.load('cfgs/common/datasets/drivingstereo.py')
-drivingstereo.train.augmentations = augmentations
+sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # (436, 1024, 3)
+sintel.train.augmentations = train_augmentations
+
+unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')  # (2160, 3840, 3)
+unrealstereo4k.train.augmentations = train_augmentations
+unrealstereo4k.train.return_right_disp = False
+
+virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # (375, 1242, 3)
+virtualkitti2.train.augmentations = train_augmentations
+virtualkitti2.train.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[kitti12.trainval, kitti15.trainval, sceneflow.train, drivingstereo.train],
+    all_dataset=[fallingthings.train, instereo2k.train, sceneflow.train,  sintel.train, unrealstereo4k.train, virtualkitti2.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -62,7 +70,7 @@ model = LazyCall(LightStereo)(
     left_att=True)
 
 # optim
-lr = 0.0001 * batch_size_per_gpu
+lr = 0.0002 * batch_size_per_gpu
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -77,7 +85,6 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # train params
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MultiDataset/LightStereo_E')
-runtime_params.train_epochs = 90
+runtime_params.train_epochs = 30
 runtime_params.mixed_precision = True
-runtime_params.use_sync_bn = False
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_E/cesc/ckpt/epoch_89/pytorch_model.bin')
