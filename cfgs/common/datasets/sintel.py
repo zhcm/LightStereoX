@@ -28,7 +28,7 @@ val = LazyCall(SintelDataset)(
 
 val_loader = LazyCall(build_dataloader)(
     all_dataset=[val],
-    batch_size=1,
+    batch_size=2,
     workers=8,
     pin_memory=True,
     shuffle=False)
