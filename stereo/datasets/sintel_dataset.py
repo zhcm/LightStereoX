@@ -34,12 +34,13 @@ class SintelDataset(DatasetTemplate):
         occ_path = disp_path.replace('disparities', 'occlusions')
         occ = Image.open(occ_path)
         occ = np.array(occ, dtype=np.float32)
+        occ_mask = occ == 255.0
 
         sample = {
             'left': left_img,
             'right': right_img,
             'disp': disp_img,
-            'occ_mask': occ
+            'occ_mask': occ_mask
         }
 
         if self.augmentations is not None:

@@ -201,6 +201,13 @@ class Trainer:
             single_iter_second = trained_time_past_all / (total_iter + 1 - start_epoch * len(self.train_loader))
             remaining_second_all = single_iter_second * (total_epochs * len(self.train_loader) - total_iter - 1)
             if total_iter % self.cfg.runtime_params.log_period == 0:
+                loss_message = ''
+                for k, v in tb_info.items():
+                    item_name = k.split('/')[-1]
+                    if 'loss' not in item_name:
+                        continue
+                    loss_message += '{}:{:#.6g} '.format(item_name, v)
+
                 message = ('Training Epoch:{:>2d}/{} Iter:{:>4d}/{} '
                            'Loss:{:#.6g}({:#.6g}) LR:{:.4e} '
                            'DataTime:{:.2f}ms InferTime:{:.2f}ms '
@@ -210,7 +217,7 @@ class Trainer:
                                     (data_timer - start_timer) * 1000, (infer_timer - data_timer) * 1000,
                                     tbar.format_interval(trained_time_past_all),
                                     tbar.format_interval(remaining_second_all))
-                self.logger.info(message)
+                self.logger.info(message + '  ' + loss_message)
 
                 tb_info.update({'scalar/train/lr': lr})
                 if self.global_rank == 0 and self.tb_writer is not None:
