@@ -23,11 +23,13 @@ class CREStereoDataset(DatasetTemplate):
 
         left_disp = cv2.imread(left_disp_path, cv2.IMREAD_UNCHANGED)
         left_disp = left_disp.astype(np.float32) / 32
+        occ_mask = np.zeros_like(left_disp, dtype=bool)
 
         sample = {
             'left': left_img,
             'right': right_img,
-            'disp': left_disp
+            'disp': left_disp,
+            'occ_mask': occ_mask
         }
 
         if self.return_right_disp:
@@ -40,8 +42,8 @@ class CREStereoDataset(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
+        assert not sample['occ_mask'].any(), 'there is a True in CREStereo occ mask'
         sample['index'] = idx
         sample['name'] = left_path
 
         return sample
-    

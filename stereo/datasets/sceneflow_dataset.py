@@ -40,6 +40,7 @@ class SceneFlowDataset(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
+        assert not sample['occ_mask'].any(), 'there is a True in Sceneflow occ mask'
         sample['index'] = idx
         sample['name'] = left_img_path
         return sample
