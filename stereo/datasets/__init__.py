@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 
 
-def build_dataloader(is_dist, all_dataset, batch_size, shuffle, workers, pin_memory,
+def build_dataloader(is_dist, all_dataset, batch_size, shuffle, workers, pin_memory, drop_last=False,
                      batch_uniform=False, h_range=None, w_range=None):
     dataset = torch.utils.data.ConcatDataset(all_dataset)
 
@@ -25,7 +25,7 @@ def build_dataloader(is_dist, all_dataset, batch_size, shuffle, workers, pin_mem
         num_workers=workers,
         collate_fn=partial_custom_collate,
         pin_memory=pin_memory,
-        drop_last=False
+        drop_last=drop_last
     )
     return dataset, loader, sampler
 
