@@ -7,7 +7,7 @@ from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 
-from stereo.modeling.models.nmrf.backbone import Backbone
+from stereo.modeling.models.nmrf.backbone import create_backbone
 from stereo.modeling.models.nmrf.DPN import DPN
 from stereo.modeling.models.nmrf.NMRF import NMRF, Criterion
 from stereo.modeling.models.nmrf.build_optimizer import build_optimizer, for_compatibility
@@ -31,6 +31,8 @@ val_augmentations = [
 
 data = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 data.train.augmentations = train_augmentations
+data.val.augmentations = val_augmentations
+data.val.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 2
@@ -49,7 +51,8 @@ val_loader = LazyCall(build_dataloader)(
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
-    pin_memory=True)
+    pin_memory=True,
+    drop_last=False)
 
 weight_dict = {'proposal_disp': 1,
                'init': 1,
@@ -65,8 +68,8 @@ weight_dict = {'proposal_disp': 1,
                'loss_disp': 2.0}
 criterion = LazyCall(Criterion)(weight_dict=weight_dict, max_disp=192, loss_type='L1')
 
-model = LazyCall(NMRF)(backbone=LazyCall(Backbone)(output_dim=256),
-                       dpn=LazyCall(DPN)(cost_group=4, num_proposals=4, feat_dim=256, context_dim=64, num_prop_layers=5,
+model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', norm_fn='instance', out_channels=128, drop_path=0.4),
+                       dpn=LazyCall(DPN)(cost_group=4, num_proposals=4, feat_dim=128, context_dim=64, num_prop_layers=5,
                                          prop_embed_dim=128, mlp_ratio=4, split_size=1, prop_n_heads=4,
                                          normalize_before=True),
                        num_proposals=4,
@@ -81,13 +84,16 @@ model = LazyCall(NMRF)(backbone=LazyCall(Backbone)(output_dim=256),
                        return_intermediate=True,
                        normalize_before=True,
                        aux_loss=True,
+                       divis_by=32,
+                       compat=False,
                        criterion=criterion)
 
 # optim
-optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=0.0005)
+lr = 0.0005
+optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
-scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=0.0005, total_steps=300100, pct_start=0.05,
+scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.05,
                                  cycle_momentum=False, anneal_strategy='cos')
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
@@ -95,6 +101,4 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 # runtime params max_iter=300000, all_batchsize=8, epoch=300000/(35454/8), lr=0.0005, 4gpus
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF')
 runtime_params.train_epochs = 68
-runtime_params.eval_period = 100
-runtime_params.mixed_precision = False
-runtime_params.pretrained_model = '/mnt/nas/algorithm/chenming.zhang/sceneflow.pth'
+runtime_params.eval_period = 1

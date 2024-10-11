@@ -173,27 +173,27 @@ def checkpoint_filter_fn(state_dict):
     return out_dict
 
 
-def create_backbone(cfg):
-    model_type = cfg.BACKBONE.MODEL_TYPE
+def create_backbone(model_type, norm_fn, out_channels, drop_path):
+    model_type = model_type
     if model_type == "resnet":
-        if cfg.BACKBONE.NORM_FN == "instance":
+        if norm_fn == "instance":
             norm_layer = nn.InstanceNorm2d
-        elif cfg.BACKBONE.NORM_FN == 'batch':
+        elif norm_fn == 'batch':
             norm_layer = nn.BatchNorm2d
         else:
-            raise ValueError(f'Invalid backbone normalization type: {cfg.BACKBONE.NORM_FN}')
-        backbone = Backbone(cfg.BACKBONE.OUT_CHANNELS, norm_layer)
+            raise ValueError(f'Invalid backbone normalization type: {norm_fn}')
+        backbone = Backbone(out_channels, norm_layer)
     elif model_type == "swin":
-        backbone = SwinAdaptor(out_channels=cfg.BACKBONE.OUT_CHANNELS, drop_path_rate=cfg.BACKBONE.DROP_PATH)
+        backbone = SwinAdaptor(out_channels=out_channels, drop_path_rate=drop_path)
         pretrained = True
         if pretrained:
-            weight_url = cfg.BACKBONE.WEIGHT_URL
+            weight_url = '/mnt/nas/algorithm/chenming.zhang/github/NMRF/swin_tiny_patch4_window7_224.pth'
             if weight_url:
                 weight = torch.load(weight_url, map_location="cpu")
                 weight = checkpoint_filter_fn(weight)
                 backbone.backbone.load_state_dict(weight)
                 logger = logging.getLogger(__name__)
-                logger.info("Load pretrained backbone weights from {}".format(weight_url))
+                print("Load pretrained backbone weights from {}".format(weight_url))
     else:
         raise ValueError(f"Do not find {model_type}")
 
