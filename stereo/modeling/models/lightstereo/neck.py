@@ -37,11 +37,12 @@ class Neck(nn.Module):
                                     kernel_size=3, padding=1, padding_mode="replicate",
                                     norm_layer=nn.InstanceNorm2d)
 
+    @torch.autocast(device_type="cuda", enabled=False)
     def forward(self, features):
         c2, c3, c4, c5 = features
-        p4 = self.fpn_layer4(c5, c4)  # [bz, 96, H/16, W/16]
-        p3 = self.fpn_layer3(p4, c3)  # [bz, 32, H/8, W/8]
-        p2 = self.fpn_layer2(p3, c2)  # [bz, 24, H/4, W/4]
+        p4 = self.fpn_layer4(c5.float(), c4.float())  # [bz, 96, H/16, W/16]
+        p3 = self.fpn_layer3(p4, c3.float())  # [bz, 32, H/8, W/8]
+        p2 = self.fpn_layer2(p3, c2.float())  # [bz, 24, H/4, W/4]
         p2 = self.out_conv(p2)  # [bz, 24, H/4, W/4]
 
         return [p2, p3, p4, c5]
