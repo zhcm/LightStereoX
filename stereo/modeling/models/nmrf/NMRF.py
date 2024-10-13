@@ -264,6 +264,9 @@ class NMRF(nn.Module):
         if self.aux_loss and self.training:
             out['aux_outputs'] = self._set_aux_loss(disp_pred, coarse_disp, mask)
 
+        if not self.training:
+            out['disp_pred'] = out['disp']
+
         return out
 
     @torch.jit.unused

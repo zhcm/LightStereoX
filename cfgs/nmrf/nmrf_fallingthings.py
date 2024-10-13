@@ -29,7 +29,7 @@ val_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=[0, 0, 0], std=[1, 1, 1])
 ]
 
-data = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
+data = LazyConfig.load('cfgs/common/datasets/fallingthings.py')
 data.train.augmentations = train_augmentations
 data.val.augmentations = val_augmentations
 data.val.return_right_disp = False
@@ -89,7 +89,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0010
+lr = 0.0005
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -98,7 +98,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=300000, all_batchsize=8, epoch=300000/(35454/8), lr=0.0005, 4gpus
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF')
+# runtime params max_iter=200000, all_batchsize=1, epoch=200000/55350, lr=0.0005
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/FallingThings/NMRF')
 runtime_params.train_epochs = 68
 runtime_params.eval_period = 1
