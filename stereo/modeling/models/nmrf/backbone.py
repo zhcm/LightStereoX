@@ -11,7 +11,7 @@ from timm.layers import trunc_normal_
 from .ops.modules import MSDeformAttn
 from .adaptor_modules import DeformNeck
 from .swin import SwinTransformer
-from .hybrid_backbone import Hybrid
+from .hybrid_backbone import Hybrid, Hybrid2
 
 
 class ResidualBlock(nn.Module):
@@ -196,7 +196,7 @@ def create_backbone(model_type, norm_fn, out_channels, drop_path):
                 logger = logging.getLogger(__name__)
                 print("Load pretrained backbone weights from {}".format(weight_url))
     elif model_type == 'hybrid':
-        backbone = Hybrid()
+        backbone = Hybrid2()
     else:
         raise ValueError(f"Do not find {model_type}")
 

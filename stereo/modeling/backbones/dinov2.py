@@ -165,7 +165,7 @@ class DinoVisionTransformer(nn.Module):
         self.norm = norm_layer(embed_dim)
         self.head = nn.Identity()
 
-        self.mask_token = nn.Parameter(torch.zeros(1, embed_dim))
+        # self.mask_token = nn.Parameter(torch.zeros(1, embed_dim))
 
         self.init_weights()
 
@@ -395,7 +395,7 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
     return model
 
 
-def DINOv2(model_name):
+def DINOv2(model_name, patch_size):
     model_zoo = {
         "vits": vit_small, 
         "vitb": vit_base, 
@@ -405,7 +405,7 @@ def DINOv2(model_name):
     
     return model_zoo[model_name](
         img_size=518,
-        patch_size=14,
+        patch_size=patch_size,
         init_values=1.0,
         ffn_layer="mlp" if model_name != "vitg" else "swiglufused",
         block_chunks=0,

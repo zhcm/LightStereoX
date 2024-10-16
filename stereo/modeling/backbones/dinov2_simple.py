@@ -95,7 +95,7 @@ class DinoVisionTransformer(nn.Module):
         norm_layer = partial(nn.LayerNorm, eps=1e-6)
 
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
-        self.num_tokens = 1
+        self.num_tokens = 0
         self.n_blocks = depth
         self.num_heads = num_heads
         self.patch_size = patch_size
@@ -103,10 +103,10 @@ class DinoVisionTransformer(nn.Module):
         self.interpolate_antialias = interpolate_antialias
         self.interpolate_offset = interpolate_offset
 
-        self.patch_embed = embed_layer(img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
-        num_patches = self.patch_embed.num_patches
+        # self.patch_embed = embed_layer(img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+        num_patches = img_size ** 2
 
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + self.num_tokens, embed_dim))
         assert num_register_tokens >= 0
         self.register_tokens = (
@@ -171,20 +171,19 @@ class DinoVisionTransformer(nn.Module):
 
     def init_weights(self):
         trunc_normal_(self.pos_embed, std=0.02)
-        nn.init.normal_(self.cls_token, std=1e-6)
+        # nn.init.normal_(self.cls_token, std=1e-6)
         if self.register_tokens is not None:
             nn.init.normal_(self.register_tokens, std=1e-6)
         named_apply(init_weights_vit_timm, self)
 
     def interpolate_pos_encoding(self, x, w, h):
         previous_dtype = x.dtype
-        npatch = x.shape[1] - 1
-        N = self.pos_embed.shape[1] - 1
+        npatch = x.shape[1]
+        N = self.pos_embed.shape[1]
         if npatch == N and w == h:
             return self.pos_embed
         pos_embed = self.pos_embed.float()
-        class_pos_embed = pos_embed[:, 0]
-        patch_pos_embed = pos_embed[:, 1:]
+        patch_pos_embed = pos_embed
         dim = x.shape[-1]
         w0 = w // self.patch_size
         h0 = h // self.patch_size
@@ -207,7 +206,7 @@ class DinoVisionTransformer(nn.Module):
         assert int(w0) == patch_pos_embed.shape[-2]
         assert int(h0) == patch_pos_embed.shape[-1]
         patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
-        return torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1).to(previous_dtype)
+        return patch_pos_embed.to(previous_dtype)
 
     def prepare_tokens_with_masks(self, x, masks=None):
         B, nc, w, h = x.shape
@@ -320,12 +319,16 @@ class DinoVisionTransformer(nn.Module):
             return tuple(zip(outputs, class_tokens))
         return tuple(outputs)
 
-    def forward(self, *args, is_training=False, **kwargs):
-        ret = self.forward_features(*args, **kwargs)
-        if is_training:
-            return ret
-        else:
-            return self.head(ret["x_norm_clstoken"])
+    def forward(self, x):
+        B, _, w, h = x.shape
+        x = x.flatten(2).transpose(1, 2)  # B HW C
+        x = x + self.interpolate_pos_encoding(x, w, h)
+        for i, blk in enumerate(self.blocks):
+            x = blk(x)
+
+        out = self.norm(x)
+        out = out.reshape(B, w // self.patch_size, h // self.patch_size, -1).permute(0, 3, 1, 2).contiguous()
+        return out
 
 
 def init_weights_vit_timm(module: nn.Module, name: str = ""):
@@ -404,7 +407,7 @@ def DINOv2(model_name, patch_size):
     }
     
     return model_zoo[model_name](
-        img_size=518,
+        img_size=24,
         patch_size=patch_size,
         init_values=1.0,
         ffn_layer="mlp" if model_name != "vitg" else "swiglufused",
