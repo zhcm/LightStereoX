@@ -211,7 +211,7 @@ class DinoVisionTransformer(nn.Module):
 
     def prepare_tokens_with_masks(self, x, masks=None):
         B, nc, w, h = x.shape
-        x = self.patch_embed(x)
+        x, c3, c2 = self.patch_embed(x)
         if masks is not None:
             x = torch.where(masks.unsqueeze(-1), self.mask_token.to(x.dtype).unsqueeze(0), x)
 
@@ -228,7 +228,7 @@ class DinoVisionTransformer(nn.Module):
                 dim=1,
             )
 
-        return x
+        return x, c3, c2
 
     def forward_features_list(self, x_list, masks_list):
         x = [self.prepare_tokens_with_masks(x, masks) for x, masks in zip(x_list, masks_list)]
@@ -281,7 +281,7 @@ class DinoVisionTransformer(nn.Module):
         return output
 
     def _get_intermediate_layers_chunked(self, x, n=1):
-        x = self.prepare_tokens_with_masks(x)
+        x, c3, c2 = self.prepare_tokens_with_masks(x)
         output, i, total_block_len = [], 0, len(self.blocks[-1])
         # If n is an int, take the n last blocks. If it's a list, take them
         blocks_to_take = range(total_block_len - n, total_block_len) if isinstance(n, int) else n
@@ -292,7 +292,7 @@ class DinoVisionTransformer(nn.Module):
                     output.append(x)
                 i += 1
         assert len(output) == len(blocks_to_take), f"only {len(output)} / {len(blocks_to_take)} blocks found"
-        return output
+        return output,  c3, c2
 
     def get_intermediate_layers(
         self,
@@ -303,7 +303,7 @@ class DinoVisionTransformer(nn.Module):
         norm=True
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]]]:
         if self.chunked_blocks:
-            outputs = self._get_intermediate_layers_chunked(x, n)
+            outputs, c3, c2 = self._get_intermediate_layers_chunked(x, n)
         else:
             outputs = self._get_intermediate_layers_not_chunked(x, n)
         if norm:
@@ -318,7 +318,7 @@ class DinoVisionTransformer(nn.Module):
             ]
         if return_class_token:
             return tuple(zip(outputs, class_tokens))
-        return tuple(outputs)
+        return outputs[-1], c3, c2
 
     def forward(self, *args, is_training=False, **kwargs):
         ret = self.forward_features(*args, **kwargs)
@@ -404,11 +404,11 @@ def DINOv2(model_name, patch_size):
     }
     
     return model_zoo[model_name](
-        img_size=518,
+        img_size=224,
         patch_size=patch_size,
         init_values=1.0,
         ffn_layer="mlp" if model_name != "vitg" else "swiglufused",
-        block_chunks=0,
+        block_chunks=4,
         num_register_tokens=0,
         interpolate_antialias=False,
         interpolate_offset=0.1

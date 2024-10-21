@@ -91,7 +91,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='hybrid', n
                        criterion=criterion)
 
 # optim
-lr = 0.0010
+lr = 0.0010 * 3
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
