@@ -84,7 +84,7 @@ class Backbone(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = 2 * (x / 255.0) - 1.0
+        # x = 2 * (x / 255.0) - 1.0
         x = self.conv1(x)
         x = self.norm1(x)
         x = self.relu1(x)
@@ -150,7 +150,7 @@ class SwinAdaptor(nn.Module):
             m._reset_parameters()
 
     def forward(self, x):
-        x.sub_(self.mean).div_(self.std)
+        # x.sub_(self.mean).div_(self.std)
         outs = self.backbone.forward(x)
         features = [outs[name] for name in ["p0", "p1", "p2", "p3"]]
         out = self.neck(x, features)  # 4s

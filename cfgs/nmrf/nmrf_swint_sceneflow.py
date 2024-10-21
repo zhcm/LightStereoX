@@ -14,6 +14,7 @@ from stereo.modeling.models.nmrf.build_optimizer import build_optimizer, for_com
 from stereo.solver.build import ClipGradNorm
 
 from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.constants import constants
 
 train_augmentations = [
     LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
@@ -21,12 +22,12 @@ train_augmentations = [
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[384, 768]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=[0, 0, 0], std=[1, 1, 1])
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 val_augmentations = [
     LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=[0, 0, 0], std=[1, 1, 1])
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 data = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
