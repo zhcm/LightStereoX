@@ -21,12 +21,12 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[384, 768]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[392, 784]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
 val_augmentations = [
-    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+    LazyCall(stereo_trans.DivisiblePad)(divisor=56),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
@@ -86,12 +86,12 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='hybrid', n
                        return_intermediate=True,
                        normalize_before=True,
                        aux_loss=True,
-                       divis_by=16,
+                       divis_by=56,
                        compat=False,
                        criterion=criterion)
 
 # optim
-lr = 0.0010 * 3
+lr = 0.0010
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -100,7 +100,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=300000, all_batchsize=8, epoch=300000/(35454/8), lr=0.0005, 4gpus
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF')
 runtime_params.train_epochs = 68
 runtime_params.eval_period = 1
+runtime_params.find_unused_parameters = True

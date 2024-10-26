@@ -23,16 +23,6 @@ def make_2tuple(x):
     return (x, x)
 
 
-def replace_batchnorm_with_instancenorm(model):
-    for name, module in model.named_children():
-        if isinstance(module, nn.BatchNorm2d):  # 如果是2D的BatchNorm层（常用于CNN）
-            setattr(model, name, nn.InstanceNorm2d(module.num_features))  # 替换为LayerNorm
-        elif isinstance(module, nn.BatchNorm1d):  # 如果是1D的BatchNorm层（常用于MLP）
-            setattr(model, name, nn.InstanceNorm1d(module.num_features))
-        else:
-            replace_batchnorm_with_instancenorm(module)  # 递归地处理子模块
-
-
 class PatchEmbed(nn.Module):
     """
     2D image to patch embedding: (B,C,H,W) -> (B,N,D)
@@ -73,19 +63,8 @@ class PatchEmbed(nn.Module):
 
         self.flatten_embedding = flatten_embedding
 
-        # self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW)
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW)
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
-
-        import timm
-        model = timm.create_model('efficientnetv2_rw_s', pretrained=False)
-        replace_batchnorm_with_instancenorm(model)
-        self.conv_stem = model.conv_stem
-        self.bn1 = model.bn1
-        self.block0 = model.blocks[0]
-        self.block1 = model.blocks[1]
-        self.block2 = model.blocks[2]
-        self.block3 = model.blocks[3:5]
-        self.block4 = nn.Conv2d(in_channels=160, out_channels=768, kernel_size=3, padding=1, bias=True)
 
     def forward(self, x: Tensor) -> Tensor:
         _, _, H, W = x.shape
@@ -94,22 +73,13 @@ class PatchEmbed(nn.Module):
         assert H % patch_H == 0, f"Input image height {H} is not a multiple of patch height {patch_H}"
         assert W % patch_W == 0, f"Input image width {W} is not a multiple of patch width: {patch_W}"
 
-        # x = self.proj(x)  # B C H W
-
-        c1 = self.conv_stem(x)  # [bz, 32, H/2, W/2]
-        c1 = self.bn1(c1)
-        c1 = self.block0(c1)
-        c2 = self.block1(c1)  # [bz, 56, H/4, W/4]
-        c3 = self.block2(c2)  # [bz, 80, H/8, W/8]
-        c4 = self.block3(c3)  # [bz, 192, H/16, W/16]
-        x = self.block4(c4)  # [bz, 768, H/16, W/16]
-
+        x = self.proj(x)  # B C H W
         H, W = x.size(2), x.size(3)
         x = x.flatten(2).transpose(1, 2)  # B HW C
         x = self.norm(x)
         if not self.flatten_embedding:
             x = x.reshape(-1, H, W, self.embed_dim)  # B H W C
-        return x, c3, c2
+        return x
 
     def flops(self) -> float:
         Ho, Wo = self.patches_resolution
