@@ -160,6 +160,12 @@ class Trainer:
 
         train_loader_iter = iter(self.train_loader)
         for i in range(0, len(self.train_loader)):
+
+            current_iter = current_epoch * len(self.train_loader) + i
+            if current_iter > self.cfg.runtime_params.get('max_iter', 1e10):
+                self.logger.info('Max iter reached.')
+                break
+
             # zero grad
             self.optimizer.zero_grad()
             lr = self.optimizer.param_groups[0]['lr']
