@@ -28,12 +28,13 @@ train_augmentations = [
 
 data = LazyConfig.load('cfgs/common/datasets/argoverse.py')
 data.train.augmentations = train_augmentations
+data.val.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[data.train, data.val],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -93,9 +94,10 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=500000, all_batchsize=1, epoch=500000/55350, lr=0.0005
+# runtime params max_iter=500000, all_batchsize=1, lr=0.0005
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/ArgoverseDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000/4008)
+runtime_params.train_epochs = math.ceil(500000/5530)
 runtime_params.max_iter = int(500000/16)
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
+runtime_params.max_ckpt_save_num = 200

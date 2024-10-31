@@ -95,7 +95,7 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 # runtime params max_iter=500000, all_batchsize=1, epoch=500000/55350, lr=0.0005
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/CarlaDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000/542400)
+runtime_params.train_epochs = math.ceil(500000/542397)
 runtime_params.max_iter = int(500000/16)
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

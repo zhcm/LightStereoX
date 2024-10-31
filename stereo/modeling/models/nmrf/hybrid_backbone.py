@@ -194,7 +194,6 @@ class Hybrid(nn.Module):
         super().__init__()
         self.vit_backbone = DINOv2(model_name='vits')
         state_dict = torch.hub.load_state_dict_from_url('dinov2_vits14_pretrain.pth', map_location="cpu")
-        # state_dict.pop('mask_token')
         self.vit_backbone.load_state_dict(state_dict, strict=True)
 
         self.projects = nn.ModuleList([
