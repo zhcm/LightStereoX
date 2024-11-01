@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'Sintel')
 
 train = LazyCall(SintelDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Sintel/sintel_final_all.txt',
+    split_file='./data/Sintel/Sintel_final_all.txt',
     augmentations=None
 )
 
