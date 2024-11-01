@@ -13,26 +13,9 @@ data_root_path = os.path.join(data_root_dir, 'CREStereoData')
 
 train = LazyCall(CREStereoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/CREStereo/crestereo_train_180000.txt',
+    split_file='./data/CREStereo/crestereo_all.txt',
     augmentations=None,
     return_right_disp=True
 )
-
-val = LazyCall(CREStereoDataset)(
-    data_root_path=data_root_path,
-    split_file='./data/CREStereo/crestereo_val_20000.txt',
-    augmentations=[
-        LazyCall(stereo_trans.DivisiblePad)(divisor=32, mode='round'),
-        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-    ],
-    return_right_disp=False
-)
-
-val_loader = LazyCall(build_dataloader)(
-    all_dataset=[val],
-    batch_size=2,
-    workers=8,
-    pin_memory=True,
-    shuffle=False)
 
 # (1080, 1920, 3)
