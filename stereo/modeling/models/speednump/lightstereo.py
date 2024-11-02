@@ -137,7 +137,7 @@ class LightStereo(nn.Module):
         disp_4 = model_pred['disp_4']
         loss += 0.3 * F.smooth_l1_loss(disp_4[mask], disp_gt[mask], reduction='mean')
 
-        bump_loss = F.smooth_l1_loss(model_pred['bump'], input_data["height"], reduction='mean')
+        bump_loss = F.smooth_l1_loss(model_pred['bump'].squeeze(), input_data["height"], reduction='mean')
         loss_info = {'scalar/train/loss_disp': loss.item(),
                      'scalar/train/loss_bump': bump_loss.item()}
 
