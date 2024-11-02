@@ -17,4 +17,10 @@ train = LazyCall(CarlaDataset)(
     augmentations=None,
 )
 
+weather_train = LazyCall(CarlaDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/Carla/weather_all.txt',
+    augmentations=None,
+)
+
 # (1080, 1920, 3)
