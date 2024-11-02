@@ -204,6 +204,7 @@ class RandomErase(object):
         img2 = sample['right']
 
         h, w = img1.shape[:2]
+        occ_mask_2 = np.zeros((h, w), dtype=bool)
         if np.random.rand() < self.prob:
             mean_color = np.mean(img2.reshape(-1, 3), axis=0)
             for _ in range(np.random.randint(1, self.max_time + 1)):
@@ -212,9 +213,11 @@ class RandomErase(object):
                 dx = np.random.randint(self.bounds[0], self.bounds[1])
                 dy = np.random.randint(self.bounds[0], self.bounds[1])
                 img2[y0:y0 + dy, x0:x0 + dx, :] = mean_color
+                occ_mask_2[y0:y0 + dy, x0:x0 + dx] = True
 
         sample['left'] = img1
         sample['right'] = img2
+        sample['occ_mask_2'] = occ_mask_2
         return sample
 
 
