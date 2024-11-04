@@ -2,34 +2,23 @@
 # @Author  : zhangchenming
 import numpy as np
 import random
+import cv2
 from skimage.filters import gaussian, sobel
 from scipy.interpolate import griddata
+from torchvision import transforms
 
 
 class WarpDataset:
     def __init__(self):
         self.max_disparity = 192
+        self.feed_height = 352
+        self.feed_width = 640
         self.process_width = self.feed_width + self.max_disparity
         self.xs, self.ys = np.meshgrid(np.arange(self.process_width), np.arange(self.feed_height))
 
-    def transfer_color(self, target, source):
-        target = target.astype(float) / 255
-        source = source.astype(float) / 255
-
-        target_means = target.mean(0).mean(0)
-        target_stds = target.std(0).std(0)
-
-        source_means = source.mean(0).mean(0)
-        source_stds = source.std(0).std(0)
-
-        target -= target_means
-        target /= target_stds / source_stds
-        target += source_means
-
-        target = np.clip(target, 0, 1)
-        target = (target * 255).astype(np.uint8)
-
-        return target
+        self.keep_aspect_ratio = True
+        self.disable_sharpening = False
+        self.disable_background = False
 
     def process_disparity(self, disparity, max_disparity_range=(40, 196)):
         """ Depth predictions have arbitrary scale - need to convert to a pixel disparity"""
@@ -143,3 +132,78 @@ class WarpDataset:
 
         mask = mask_up + mask_down
         return mask
+
+    def prepare_sizes(self, inputs):
+
+        height, width, _ = np.array(inputs['left_image']).shape
+
+        if self.keep_aspect_ratio:
+            if self.feed_height <= height and self.process_width <= width:
+                # can simply crop the image
+                target_height = height
+                target_width = width
+
+            else:
+                # check the constraint
+                current_ratio = height / width
+                target_ratio = self.feed_height / self.process_width
+
+                if current_ratio < target_ratio:
+                    # height is the constraint
+                    target_height = self.feed_height
+                    target_width = int(self.feed_height / height * width)
+
+                elif current_ratio > target_ratio:
+                    # width is the constraint
+                    target_height = int(self.process_width / width * height)
+                    target_width = self.process_width
+
+                else:
+                    # ratio is the same - just resize
+                    target_height = self.feed_height
+                    target_width = self.process_width
+
+        else:
+            target_height = self.feed_height
+            target_width = self.process_width
+
+        inputs = self.resize_all(inputs, target_height, target_width)
+
+        # now do cropping
+        if target_height == self.feed_height and target_width == self.process_width:
+            # we are already at the correct size - no cropping
+            pass
+        else:
+            self.crop_all(inputs)
+
+        return inputs
+
+    def crop_all(self, inputs):
+
+        # get crop parameters
+        height, width, _ = np.array(inputs['left_image']).shape
+        top = int(random.random() * (height - self.feed_height))
+        left = int(random.random() * (width - self.process_width))
+        right, bottom = left + self.process_width, top + self.feed_height
+
+        for key in ['left_image', 'background']:
+            inputs[key] = inputs[key].crop((left, top, right, bottom))
+        inputs['loaded_disparity'] = inputs['loaded_disparity'][top:bottom, left:right]
+
+        return inputs
+
+    @staticmethod
+    def resize_all(inputs, height, width):
+
+        # images
+        img_resizer = transforms.Resize(size=(height, width))
+        for key in ['left_image', 'background']:
+            inputs[key] = img_resizer(inputs[key])
+        # disparity - needs rescaling
+        disp = inputs['loaded_disparity']
+        disp *= width / disp.shape[1]
+
+        disp = cv2.resize(disp.astype(float), (width, height))  # ensure disp is float32 for cv2
+        inputs['loaded_disparity'] = disp
+
+        return inputs

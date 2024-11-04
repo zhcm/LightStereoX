@@ -2,18 +2,18 @@
 # @Author  : zhangchenming
 import os
 from stereo.config.lazy import LazyCall
-from stereo.datasets.mono_bdd100k import BDD100K
+from stereo.datasets.mono_dataset import MonoDataset
 from stereo.datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 
 from cfgs.common.runtime_params import data_root_dir
 from cfgs.common.constants import constants
 
-data_root_path = os.path.join(data_root_dir, 'StereoFromCarla')
+data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
-train = LazyCall(BDD100K)(
+train = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/BDD100K/train.txt',
+    split_file='./data/Mono/DepthAnythingV1_selected.txt',
     augmentations=None,
 )
 
