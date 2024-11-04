@@ -20,5 +20,16 @@ train = LazyCall(SpeedBump)(
 val = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
     split_file='./data/SpeedBump/val.txt',
-    augmentations=None
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ]
 )
+
+val_loader = LazyCall(build_dataloader)(
+    all_dataset=[val],
+    batch_size=1,
+    shuffle=False,
+    workers=8,
+    pin_memory=True)
+

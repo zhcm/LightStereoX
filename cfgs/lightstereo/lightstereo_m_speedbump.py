@@ -34,7 +34,7 @@ train_loader = LazyCall(build_dataloader)(
     all_dataset=[speedbump.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
-    workers=0,
+    workers=8,
     pin_memory=True)
 
 val_loader = LazyCall(build_dataloader)(
