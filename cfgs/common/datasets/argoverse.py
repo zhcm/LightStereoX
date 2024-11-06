@@ -13,24 +13,8 @@ data_root_path = os.path.join(data_root_dir, 'Argoverse')
 
 train = LazyCall(ArgoverseDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Argoverse/argoverse_train.txt',
+    split_file='./data/Argoverse/trainval.txt',
     augmentations=None
 )
-
-val = LazyCall(ArgoverseDataset)(
-    data_root_path=data_root_path,
-    split_file='./data/Argoverse/argoverse_val.txt',
-    augmentations=[
-        LazyCall(stereo_trans.DivisiblePad)(divisor=32, mode='round'),
-        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-    ]
-)
-
-val_loader = LazyCall(build_dataloader)(
-    all_dataset=[val],
-    batch_size=1,
-    workers=8,
-    pin_memory=True,
-    shuffle=False)
 
 # (2056, 2464, 3)

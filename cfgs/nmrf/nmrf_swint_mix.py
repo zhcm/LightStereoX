@@ -29,9 +29,9 @@ train_augmentations = [
 sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
-sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # 35454
-sceneflow.train.augmentations = train_augmentations
-sceneflow.train.return_right_disp = False
+# sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # 35454
+# sceneflow.train.augmentations = train_augmentations
+# sceneflow.train.return_right_disp = False
 
 fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
 fallingthings.train.augmentations = train_augmentations
@@ -39,7 +39,6 @@ fallingthings.train.return_right_disp = False
 
 argoverse = LazyConfig.load('cfgs/common/datasets/argoverse.py')  # 5530
 argoverse.train.augmentations = train_augmentations
-argoverse.val.augmentations = train_augmentations
 
 virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
 virtualkitti2.train.augmentations = train_augmentations
@@ -67,8 +66,8 @@ spring.train.return_right_disp = False
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
 dynamic.train.augmentations = train_augmentations
 
-nerfstereo = LazyConfig.load('cfgs/common/datasets/nerfstereo.py')  # 80484
-nerfstereo.train.augmentations = train_augmentations
+# nerfstereo = LazyConfig.load('cfgs/common/datasets/nerfstereo.py')  # 80484
+# nerfstereo.train.augmentations = train_augmentations
 
 carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
 carla.train.augmentations = train_augmentations
@@ -77,9 +76,9 @@ carla.train.augmentations = train_augmentations
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sintel.train, fallingthings.train, argoverse.train, argoverse.val, virtualkitti2.train,
+    all_dataset=[sintel.train, fallingthings.train, argoverse.train, virtualkitti2.train,
                  tartanair.train, instereo2k.train, unrealstereo4k.train, crestereo.train, spring.train, dynamic.train,
-                 nerfstereo.train, carla.train],
+                 carla.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -143,7 +142,7 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 # runtime params max_iter=500000, all_batchsize=1, lr=0.0005
 # 1064 + 61500 + 8200 + 2010 + 200000 + 144900 + 306637 + 35454 + 80484 + 21260 + 552057 + 5000 + 5530
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000 / 1388642)
+runtime_params.train_epochs = math.ceil(500000 / 1308158)
 # runtime_params.max_iter = int(500000/16)
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

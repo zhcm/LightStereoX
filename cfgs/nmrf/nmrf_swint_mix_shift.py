@@ -58,14 +58,6 @@ argoverse.train.augmentations = [
     LazyCall(stereo_trans.ShiftRandomCrop)(crop_size=[352, 640], shift=int(69.1-61.5)),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
-argoverse.val.augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.ShiftRandomCrop)(crop_size=[352, 640], shift=int(69.1-61.5)),
-    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
-]
 
 virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
 virtualkitti2.train.augmentations = [
@@ -166,9 +158,9 @@ carla.train.augmentations = [
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sintel.train, fallingthings.train, argoverse.train, argoverse.val, virtualkitti2.train, tartanair.train,
+    all_dataset=[sintel.train, fallingthings.train, argoverse.train, virtualkitti2.train, tartanair.train,
                  instereo2k.train, unrealstereo4k.train, crestereo.train, spring.train, dynamic.train,
-                 nerfstereo.train, carla.train],
+                 carla.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -232,7 +224,7 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 # runtime params max_iter=7000000, all_batchsize=1, lr=0.0005
 # 1064 + 61500 + 8200 + 2010 + 200000 + 144900 + 306637 + 35454 + 80484 + 21260 + 552057 + 5000 + 5530
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000 / 1388642)
+runtime_params.train_epochs = math.ceil(500000 / 1308158)
 # runtime_params.max_iter = int(7000000/16)
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
