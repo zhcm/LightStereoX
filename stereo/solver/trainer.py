@@ -46,7 +46,7 @@ class Trainer:
 
             # scheduler
             cfg.scheduler.optimizer = self.optimizer
-            if 'total_steps' in self.cfg.scheduler:
+            if 'total_steps' in self.cfg.scheduler and cfg.scheduler.total_steps == -1:
                 cfg.scheduler.total_steps = cfg.runtime_params.train_epochs * len(self.train_loader)
             self.scheduler = instantiate(cfg.scheduler)
 
@@ -162,7 +162,7 @@ class Trainer:
         for i in range(0, len(self.train_loader)):
 
             current_iter = current_epoch * len(self.train_loader) + i
-            if current_iter > self.cfg.runtime_params.get('max_iter', 1e10):
+            if current_iter >= self.cfg.runtime_params.get('max_iter', 1e10):
                 self.logger.info('Max iter reached.')
                 break
 

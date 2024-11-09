@@ -26,59 +26,57 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
-sintel.train.augmentations = train_augmentations
+sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # 35454
+sceneflow.train.augmentations = train_augmentations
+sceneflow.train.return_right_disp = False
 
-# sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # 35454
-# sceneflow.train.augmentations = train_augmentations
-# sceneflow.train.return_right_disp = False
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
+carla.train.augmentations = train_augmentations
 
-fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
-fallingthings.train.augmentations = train_augmentations
-fallingthings.train.return_right_disp = False
-
-argoverse = LazyConfig.load('cfgs/common/datasets/argoverse.py')  # 5530
-argoverse.train.augmentations = train_augmentations
-
-virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
-virtualkitti2.train.augmentations = train_augmentations
-virtualkitti2.train.return_right_disp = False
-
-tartanair = LazyConfig.load('cfgs/common/datasets/tartanair.py')  # 306637
-tartanair.train.augmentations = train_augmentations
-
-instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # 2010
-instereo2k.train.augmentations = train_augmentations
-instereo2k.train.return_right_disp = False
-
-unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')  # 8200
-unrealstereo4k.train.augmentations = train_augmentations
-unrealstereo4k.train.return_right_disp = False
+dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
+dynamic.train.augmentations = train_augmentations
 
 crestereo = LazyConfig.load('cfgs/common/datasets/crestereo.py')  # 200000
 crestereo.train.augmentations = train_augmentations
 crestereo.train.return_right_disp = False
 
+fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
+fallingthings.train.augmentations = train_augmentations
+fallingthings.train.return_right_disp = False
+
+instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # 2010
+instereo2k.train.augmentations = train_augmentations
+instereo2k.train.return_right_disp = False
+
+tartanair = LazyConfig.load('cfgs/common/datasets/tartanair.py')  # 306637
+tartanair.train.augmentations = train_augmentations
+
+sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
+sintel.train.augmentations = train_augmentations
+
 spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
 spring.train.augmentations = train_augmentations
 spring.train.return_right_disp = False
 
-dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
-dynamic.train.augmentations = train_augmentations
+virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
+virtualkitti2.train.augmentations = train_augmentations
+virtualkitti2.train.return_right_disp = False
+
+# argoverse = LazyConfig.load('cfgs/common/datasets/argoverse.py')  # 5530
+# argoverse.train.augmentations = train_augmentations
+
+# unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')  # 8200
+# unrealstereo4k.train.augmentations = train_augmentations
+# unrealstereo4k.train.return_right_disp = False
 
 # nerfstereo = LazyConfig.load('cfgs/common/datasets/nerfstereo.py')  # 80484
 # nerfstereo.train.augmentations = train_augmentations
-
-carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
-carla.train.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sintel.train, fallingthings.train, argoverse.train, virtualkitti2.train,
-                 tartanair.train, instereo2k.train, unrealstereo4k.train, crestereo.train, spring.train, dynamic.train,
-                 carla.train],
+    all_dataset=[sceneflow.train, carla.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -134,15 +132,16 @@ lr = 0.0005
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
-scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.05,
+total_steps = 83500
+scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=total_steps, pct_start=0.05,
                                  cycle_momentum=False, anneal_strategy='cos')
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=500000, all_batchsize=1, lr=0.0005
-# 1064 + 61500 + 8200 + 2010 + 200000 + 144900 + 306637 + 35454 + 80484 + 21260 + 552057 + 5000 + 5530
+# runtime params max_iter=83500, all_batchsize=16, lr=0.0005
+# 35454 + 552057 + 144900 + 200000 + 61500 + 2010 + 306637 + 1064 + 5000 + 21260 = 1329882
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000 / 1308158)
-# runtime_params.max_iter = int(500000/16)
+runtime_params.train_epochs = math.ceil(1336000 / 587511)
+runtime_params.max_iter = total_steps
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

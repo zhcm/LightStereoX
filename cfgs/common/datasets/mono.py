@@ -13,7 +13,7 @@ data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
 train = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV1_selected.txt',
+    split_file='./data/Mono/DepthAnythingV2_google_landmarks.txt',
     augmentations=None,
 )
 
