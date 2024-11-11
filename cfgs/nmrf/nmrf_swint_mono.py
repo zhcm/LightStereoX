@@ -26,6 +26,9 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
+sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
+sintel.train.augmentations = train_augmentations
+
 data = LazyConfig.load('cfgs/common/datasets/mono.py')
 data.train.augmentations = train_augmentations
 
@@ -42,7 +45,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[sintel.train],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
