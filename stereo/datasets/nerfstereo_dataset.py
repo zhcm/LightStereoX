@@ -16,12 +16,22 @@ class NERFStereoDataset(DatasetTemplate):
         item = self.data_list[idx]
         full_paths = [os.path.join(self.root, x) for x in item[0:3]]
         left_img_path, right_img_path, disp_img_path = full_paths
+
+        left_path = Path(left_img_path)
+        left_img_path = left_path.parent.parent.parent.joinpath('center').joinpath(left_path.name)
+        assert left_img_path.exists(), str(left_img_path)
+        relativepath = left_img_path.relative_to(Path(self.root))
+        left_img_path = str(left_img_path)
+
+        conf_img_path = left_path.parent.parent.parent.joinpath('AO').joinpath(left_path.stem + '.png')
+        conf = cv2.imread(conf_img_path, -1) / 65536.0
+
         left_img = Image.open(left_img_path).convert('RGB')
         left_img = np.array(left_img, dtype=np.float32)
         right_img = Image.open(right_img_path).convert('RGB')
         right_img = np.array(right_img, dtype=np.float32)
 
-        super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/NERFStereo', item[0])
+        super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/NERFStereo', relativepath)
         super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
         if not os.path.exists(os.path.dirname(super_pixel_label)):
             os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
@@ -33,8 +43,12 @@ class NERFStereoDataset(DatasetTemplate):
             cv2.imwrite(super_pixel_label, label.astype(np.uint16))
         super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.int32)
 
-        disp_img = np.array(Image.open(disp_img_path), dtype=np.float32)
-        disp_img = disp_img / 64.0
+        # disp_img = np.array(Image.open(disp_img_path), dtype=np.float32)
+        # disp_img = disp_img / 64.0
+        disp_img = cv2.imread(disp_img_path, -1) / 64.
+        disp_img = disp_img.astype(np.float32)
+
+        disp_img = disp_img * (conf > 0.5)
         assert not np.isnan(disp_img).any(), 'disp_img has nan'
         occ_mask = np.zeros_like(disp_img, dtype=bool)
         sample = {

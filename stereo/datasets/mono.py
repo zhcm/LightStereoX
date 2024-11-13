@@ -35,7 +35,10 @@ class WarpDataset:
             # but will mean network is robust to disparities which are too big
             max_disparity_range = (self.max_disparity * 1.05, self.max_disparity * 1.15)
 
-        disparity /= disparity.max()  # now 0-1
+        if disparity.max() == 0.0:
+            disparity /= 1e-8  # now 0-1
+        else:
+            disparity /= disparity.max()  # now 0-1
 
         scaling_factor = (max_disparity_range[0] + random.random() *
                           (max_disparity_range[1] - max_disparity_range[0]))
