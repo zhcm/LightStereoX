@@ -30,13 +30,16 @@ sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
 data = LazyConfig.load('cfgs/common/datasets/mono.py')
-data.train.augmentations = train_augmentations
+data.train_gl.augmentations = train_augmentations
+data.train_bdd.augmentations = train_augmentations
+data.train_21k.augmentations = train_augmentations
+data.train_365.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[data.train_gl, data.train_bdd, data.train_21k, data.train_365],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -87,7 +90,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005
+lr = 0.0005*5
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -96,9 +99,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=500000, all_batchsize=1, epoch=500000/55350, lr=0.0005
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MonoDataset/NMRF')
-runtime_params.train_epochs = math.ceil(500000/500000)
-# runtime_params.max_iter = int(500000/16)
+runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

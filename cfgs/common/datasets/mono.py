@@ -11,9 +11,27 @@ from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
-train = LazyCall(MonoDataset)(
+train_gl = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='./data/Mono/DepthAnythingV2_google_landmarks.txt',
+    augmentations=None,
+)
+
+train_bdd = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/Mono/DepthAnythingV2_bdd100k.txt',
+    augmentations=None,
+)
+
+train_21k = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/Mono/DepthAnythingV2_imagenet21K.txt',
+    augmentations=None,
+)
+
+train_365 = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/Mono/DepthAnythingV2_places365.txt',
     augmentations=None,
 )
 
