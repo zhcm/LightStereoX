@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import cv2
 import json
 from PIL import Image
 from pathlib import Path

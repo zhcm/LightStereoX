@@ -1,6 +1,8 @@
 import os
 import numpy as np
+import cv2
 
+from pathlib import Path
 from PIL import Image
 from .dataset_template import DatasetTemplate
 
@@ -58,16 +60,6 @@ class KittiDataset(DatasetTemplate):
 
         sample['index'] = idx
         sample['name'] = left_img_path
-
-        if '2012' in self.root:
-            cam2cam = read_calib_file(left_img_path[:-7].replace('colored_0', 'calib') + '.txt')
-            intrinsics = cam2cam['P2'].reshape(3, 4)[:3, :3]
-        else:
-            cam2cam = read_calib_file(left_img_path[:-7].replace('image_2', 'calib_cam_to_cam') + '.txt')
-            intrinsics = cam2cam['P_rect_02'].reshape(3, 4)[:3, :3]
-
-        sample['intrinsics'] = intrinsics
-        sample['baseline'] = np.array(54 * 10).astype(np.float32)
 
         return sample
 
