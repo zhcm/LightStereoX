@@ -21,7 +21,7 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[392, 784]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[336, 616]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
@@ -30,16 +30,36 @@ val_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-data = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-data.train.augmentations = train_augmentations
-data.val.augmentations = val_augmentations
-data.val.return_right_disp = False
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
+carla.train.augmentations = train_augmentations
+
+dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
+dynamic.train.augmentations = train_augmentations
+
+crestereo = LazyConfig.load('cfgs/common/datasets/crestereo.py')  # 200000
+crestereo.train.augmentations = train_augmentations
+crestereo.train.return_right_disp = False
+
+fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
+fallingthings.train.augmentations = train_augmentations
+fallingthings.train.return_right_disp = False
+
+instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # 2010
+instereo2k.train.augmentations = train_augmentations
+instereo2k.train.return_right_disp = False
+
+tartanair = LazyConfig.load('cfgs/common/datasets/tartanair.py')  # 306637
+tartanair.train.augmentations = train_augmentations
+
+sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
+sintel.train.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
+                 tartanair.train, sintel.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -48,7 +68,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.val],
+    all_dataset=[sintel.train],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
@@ -100,7 +120,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF')
-runtime_params.train_epochs = 68
-runtime_params.eval_period = 1
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
+runtime_params.train_epochs = 100
+runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
