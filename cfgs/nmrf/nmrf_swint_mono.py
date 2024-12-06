@@ -1,7 +1,6 @@
 # @Time    : 2024/10/8 02:37
 # @Author  : zhangchenming
 import os
-import math
 from torch.optim.lr_scheduler import OneCycleLR
 
 from stereo.config.lazy import LazyCall, LazyConfig
@@ -34,12 +33,13 @@ data.train_gl.augmentations = train_augmentations
 data.train_bdd.augmentations = train_augmentations
 data.train_21k.augmentations = train_augmentations
 data.train_365.augmentations = train_augmentations
+data.train_lsun.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_gl, data.train_bdd, data.train_21k, data.train_365],
+    all_dataset=[data.train_gl, data.train_bdd],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -90,7 +90,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005*5
+lr = 0.0005*2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler

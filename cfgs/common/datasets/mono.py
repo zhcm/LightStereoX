@@ -3,11 +3,8 @@
 import os
 from stereo.config.lazy import LazyCall
 from stereo.datasets.mono_dataset import MonoDataset
-from stereo.datasets.utils import stereo_trans
-from stereo.datasets import build_dataloader
 
 from cfgs.common.runtime_params import data_root_dir
-from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
@@ -32,6 +29,12 @@ train_21k = LazyCall(MonoDataset)(
 train_365 = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='./data/Mono/DepthAnythingV2_places365.txt',
+    augmentations=None,
+)
+
+train_lsun = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='./data/Mono/DepthAnythingV2_LSUN.txt',
     augmentations=None,
 )
 
