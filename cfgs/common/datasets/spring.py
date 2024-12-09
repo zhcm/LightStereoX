@@ -16,7 +16,7 @@ train = LazyCall(SpringDataset)(
     split_file='./data/Spring/spring_train.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 5000
 
 test = LazyCall(SpringTestDataset)(
     data_root_path=data_root_path,

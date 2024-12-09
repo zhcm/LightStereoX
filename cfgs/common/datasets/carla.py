@@ -15,7 +15,7 @@ train = LazyCall(CarlaDataset)(
     data_root_path=data_root_path,
     split_file='./data/Carla/stereoFcarla_path.txt',
     augmentations=None,
-)
+)  # 552040
 
 weather_train = LazyCall(CarlaDataset)(
     data_root_path=data_root_path,

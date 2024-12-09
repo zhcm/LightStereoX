@@ -15,6 +15,6 @@ train = LazyCall(ArgoverseDataset)(
     data_root_path=data_root_path,
     split_file='./data/Argoverse/trainval.txt',
     augmentations=None
-)
+)  # 5530
 
 # (2056, 2464, 3)

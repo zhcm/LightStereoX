@@ -16,6 +16,6 @@ train = LazyCall(FallingThingsDataset)(
     split_file='./data/FallingThings/fat_all.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 61500
 
 # (540, 960, 3)

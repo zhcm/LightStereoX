@@ -15,6 +15,6 @@ train = LazyCall(SintelDataset)(
     data_root_path=data_root_path,
     split_file='./data/Sintel/Sintel_final_all.txt',
     augmentations=None
-)
+)  # 1064
 
 # (436, 1024, 3)

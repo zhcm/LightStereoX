@@ -16,7 +16,7 @@ train = LazyCall(InStereo2KDataset)(
     split_file='./data/InStereo2K/instereo2k_train_2010.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 2010
 
 val = LazyCall(InStereo2KDataset)(
     data_root_path=data_root_path,

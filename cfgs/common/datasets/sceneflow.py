@@ -16,7 +16,7 @@ train = LazyCall(SceneFlowDataset)(
     split_file='./data/SceneFlow/sceneflow_finalpass_train_35454.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 35454
 
 val = LazyCall(SceneFlowDataset)(
     data_root_path=data_root_path,
@@ -26,7 +26,7 @@ val = LazyCall(SceneFlowDataset)(
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
     ],
     return_right_disp=True
-)
+)  # 4370
 
 val_loader = LazyCall(build_dataloader)(
     all_dataset=[val],

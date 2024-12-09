@@ -15,6 +15,6 @@ train = LazyCall(TartanAirDataset)(
     data_root_path=data_root_path,
     split_file='./data/TartanAir/all_306637.txt',
     augmentations=None
-)
+)  # 306637
 
 # (480, 640)

@@ -16,6 +16,6 @@ train = LazyCall(VirtualKitti2Dataset)(
     split_file='./data/VirtualKitti2/virtualkitti2_trainval21260.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 21260
 
 # (375, 1242, 3)

@@ -16,6 +16,6 @@ train = LazyCall(UnrealStereo4KDataset)(
     split_file='./data/UnrealStereo4K/unrealstereo4k_all.txt',
     augmentations=None,
     return_right_disp=True
-)
+)  # 8200
 
 # (2160, 3840, 3)

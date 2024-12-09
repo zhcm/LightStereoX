@@ -15,6 +15,6 @@ train = LazyCall(DynamicReplicaDataset)(
     data_root_path=data_root_path,
     split_file='./data/DynamicReplica/train.txt',
     augmentations=None,
-)
+)  # 144900
 
 # (1080, 1920, 3)
