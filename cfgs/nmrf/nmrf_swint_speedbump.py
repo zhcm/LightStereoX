@@ -21,25 +21,18 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[352, 640]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
-sintel.train.augmentations = train_augmentations
-
-data = LazyConfig.load('cfgs/common/datasets/mono.py')
-data.train_gl.augmentations = train_augmentations
-data.train_bdd.augmentations = train_augmentations
-data.train_21k.augmentations = train_augmentations
-data.train_365.augmentations = train_augmentations
-data.train_lsun.augmentations = train_augmentations
+speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
+speedbump.train.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_gl, data.train_365],
+    all_dataset=[speedbump.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -48,7 +41,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sintel.train],
+    all_dataset=[speedbump.train],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
@@ -99,7 +92,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MonoDataset/NMRF')
-runtime_params.train_epochs = 1
-runtime_params.eval_period = 10
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/NMRF')
+runtime_params.train_epochs = 60
+runtime_params.eval_period = 100
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

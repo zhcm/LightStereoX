@@ -10,32 +10,32 @@ data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
 train_gl = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV2_google_landmarks.txt',
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/Mono/DepthAnythingV2_google_landmarks.txt',
     augmentations=None,
-)
+)  # 4976922
 
 train_bdd = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV2_bdd100k.txt',
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/Mono/DepthAnythingV2_bdd100k.txt',
     augmentations=None,
-)
+)  # 100000
 
 train_21k = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV2_imagenet21K.txt',
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/Mono/DepthAnythingV2_imagenet21K.txt',
     augmentations=None,
-)
+)  # 13145689
 
 train_365 = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV2_places365.txt',
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/Mono/DepthAnythingV2_places365.txt',
     augmentations=None,
-)
+)  # 2168460
 
 train_lsun = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='./data/Mono/DepthAnythingV2_LSUN.txt',
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/Mono/DepthAnythingV2_LSUN.txt',
     augmentations=None,
-)
+)  # 9898281
 
 # (1080, 1920, 3)
