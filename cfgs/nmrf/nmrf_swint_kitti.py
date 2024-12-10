@@ -104,4 +104,5 @@ runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/KittiDatas
 runtime_params.train_epochs = 1000
 runtime_params.max_iter = max_iter
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/MixDataset/NMRF/carla-ds-cre-ft-i2k-tar-st/ckpt/epoch_1/pytorch_model.bin')
+runtime_params.max_ckpt_save_num = 1000
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/MixDataset/NMRF/mix6mono/ckpt/epoch_76000/pytorch_model.bin')

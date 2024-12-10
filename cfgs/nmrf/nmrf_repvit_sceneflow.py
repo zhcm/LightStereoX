@@ -21,18 +21,25 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[384, 768]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
-speedbump.train.augmentations = train_augmentations
+val_augmentations = [
+    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+]
+
+data = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
+data.train.augmentations = train_augmentations
+data.val.augmentations = val_augmentations
+data.val.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.train],
+    all_dataset=[data.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -41,7 +48,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.val],
+    all_dataset=[data.val],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
@@ -83,7 +90,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005
+lr = 0.0010
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -92,7 +99,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/NMRF')
-runtime_params.train_epochs = 60
-runtime_params.eval_period = 5
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/MixDataset/NMRF/mix6mono/ckpt/epoch_76000/pytorch_model.bin')
+# runtime params max_iter=300000, all_batchsize=8, epoch=300000/(35454/8), lr=0.0005, 4gpus
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF')
+runtime_params.train_epochs = 68
+runtime_params.eval_period = 1
