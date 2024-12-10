@@ -74,9 +74,9 @@ def main():
 
     # log
     logger.info("Command line arguments: " + str(args))
-    with open(args.cfg_file, "r", encoding="utf-8") as f:
-        content = f.read()
-    logger.info("Contents of args.config_file={}:\n{}".format(args.cfg_file, content))
+    # with open(args.cfg_file, "r", encoding="utf-8") as f:
+    #     content = f.read()
+    # logger.info("Contents of args.config_file={}:\n{}".format(args.cfg_file, content))
 
     args.local_rank = local_rank
     args.global_rank = global_rank
