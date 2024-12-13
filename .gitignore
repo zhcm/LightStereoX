@@ -3,6 +3,5 @@
 **.DS_Store**
 submit.py
 test.py
-tools/infer.py
 tools/scripts/eval.sh
 tools/scripts/eval_local.sh

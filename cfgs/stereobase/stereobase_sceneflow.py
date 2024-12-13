@@ -17,7 +17,7 @@ from cfgs.common.constants import constants
 # dataset
 train_augmentations = [
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
-    LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.rgb_mean, std=constants.rgb_std)
 ]
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')

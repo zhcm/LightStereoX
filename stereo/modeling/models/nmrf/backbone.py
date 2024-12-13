@@ -2,6 +2,7 @@ from functools import partial
 from typing import Callable, Optional, Tuple, Union
 import math
 import logging
+import timm
 
 import torch
 import torch.nn as nn
@@ -174,6 +175,62 @@ def checkpoint_filter_fn(state_dict):
     return out_dict
 
 
+class RepVitBackbone(nn.Module):
+    def __init__(self, out_channels=128):
+        super().__init__()
+        model = timm.create_model('repvit_m2_3', pretrained=True)
+        self.stem = model.stem
+        self.stage0 = model.stages[0]
+        self.stage1 = model.stages[1]
+        self.stage2 = model.stages[2]
+        self.stage3 = model.stages[3]
+
+        self.neck = DeformNeck(
+            dim=out_channels,
+            in_channel_list=[80, 160, 320, 640],
+            drop_path=0.0,
+            deform_ratio=0.5,
+            with_cp=False
+        )
+        self.output_dim = self.neck.dim
+
+        self.neck.apply(self._init_weights)
+        self.apply(self._init_deform_weights)
+
+    @staticmethod
+    def _init_weights(m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm) or isinstance(m, nn.BatchNorm2d):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            fan_out //= m.groups
+            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+            if m.bias is not None:
+                m.bias.data.zero_()
+
+    @staticmethod
+    def _init_deform_weights(m):
+        if isinstance(m, MSDeformAttn):
+            m._reset_parameters()
+
+    def forward(self, x):
+        c2 = self.stem(x)  # [bz, 48, H/4, W/4]
+        c2 = self.stage0(c2)  # [bz, 64, H/4, W/4]
+        c3 = self.stage1(c2)  # [bz, 128, H/8, W/8]
+        c4 = self.stage2(c3)  # [bz, 256, H/16, W/16]
+        c5 = self.stage3(c4)  # [bz, 512, H/32, W/32]
+        features = [c2, c3, c4, c5]
+        out = self.neck(x, features)  # 4s
+        out = [out, F.avg_pool2d(out, kernel_size=2, stride=2)]  # high to low res
+
+        return out
+
+
 def create_backbone(model_type, norm_fn, out_channels, drop_path):
     model_type = model_type
     if model_type == "resnet":
@@ -197,6 +254,8 @@ def create_backbone(model_type, norm_fn, out_channels, drop_path):
                 print("Load pretrained backbone weights from {}".format(weight_url))
     elif model_type == 'hybrid':
         backbone = Hybrid()
+    elif model_type == 'repvit':
+        backbone = RepVitBackbone()
     else:
         raise ValueError(f"Do not find {model_type}")
 

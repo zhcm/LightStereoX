@@ -54,12 +54,15 @@ tartanair.train.augmentations = train_augmentations
 sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
+mono = LazyConfig.load('cfgs/common/datasets/mono.py')
+mono.train_gl.augmentations = train_augmentations
+
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train],
+                 tartanair.train, sintel.train, mono.train_gl],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -121,6 +124,6 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = 100
+runtime_params.train_epochs = 50
 runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
