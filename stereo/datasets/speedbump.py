@@ -40,16 +40,19 @@ class SpeedBump(DatasetTemplate):
             for t in self.augmentations:
                 sample = t(sample)
 
-        # if sample['bump_mask'].any():
-        #     true_coords = np.argwhere(sample['bump_mask'])
-        #     min_y = true_coords[:, 0].min()
-        #     max_y = true_coords[:, 0].max()
-        #     min_x = true_coords[:, 1].min()
-        #     max_x = true_coords[:, 1].max()
-        #     new_min_y = max(0, int(min_y - (max_y - min_y) / 2))
-        #     new_max_y = min(sample['bump_mask'].shape[0], int(max_y + (max_y - min_y) / 2))
-        #     sample['bump_mask'][new_min_y:new_max_y, min_x:max_x] = True
+        sample['dilated_bump_mask'] = sample['bump_mask']
+        if sample['bump_mask'].any():
+            true_coords = np.argwhere(sample['bump_mask'])
+            min_y = true_coords[:, 0].min()
+            max_y = true_coords[:, 0].max()
+            min_x = true_coords[:, 1].min()
+            max_x = true_coords[:, 1].max()
+            new_min_y = max(0, int(min_y - (max_y - min_y)))
+            new_max_y = min(sample['bump_mask'].shape[0], int(max_y + (max_y - min_y)))
+            sample['dilated_bump_mask'][new_min_y:new_max_y, min_x:max_x] = True
 
+        sample['occ_mask'] = ~sample['dilated_bump_mask']
+        sample['valid'] = sample['disp'] < 512
         sample['height'] = height
         sample['baseline'] = float(baseline)
         sample['focallength'] = float(focallength)

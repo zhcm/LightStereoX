@@ -231,6 +231,68 @@ class RepVitBackbone(nn.Module):
         return out
 
 
+class MpVitBackbone(nn.Module):
+    def __init__(self, out_channels=128):
+        super().__init__()
+        from torch.hub import load_state_dict_from_url
+        from stereo.modeling.backbones.mpvit import mpvit_tiny, mpvit_xsmall
+
+        model = mpvit_xsmall()
+        checkpoint = load_state_dict_from_url('mpvit_xsmall.pth', map_location='cpu')
+        state_dict = checkpoint['model']
+        model.load_state_dict(state_dict)
+
+        self.stem = model.stem
+        self.patch_embed_stages = model.patch_embed_stages
+        self.mhca_stages = model.mhca_stages
+
+        self.neck = DeformNeck(
+            dim=out_channels,
+            in_channel_list=[128, 192, 256, 256],
+            drop_path=0.0,
+            deform_ratio=0.5,
+            with_cp=False
+        )
+        self.output_dim = self.neck.dim
+
+        self.neck.apply(self._init_weights)
+        self.apply(self._init_deform_weights)
+
+    @staticmethod
+    def _init_weights(m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm) or isinstance(m, nn.BatchNorm2d):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            fan_out //= m.groups
+            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+            if m.bias is not None:
+                m.bias.data.zero_()
+
+    @staticmethod
+    def _init_deform_weights(m):
+        if isinstance(m, MSDeformAttn):
+            m._reset_parameters()
+
+    def forward(self, inputs):
+        x = self.stem(inputs)
+        feats = []
+        for idx in range(4):
+            att_inputs = self.patch_embed_stages[idx](x)
+            x = self.mhca_stages[idx](att_inputs)
+            feats.append(x)
+        # [128, 192, 256, 256]
+        out = self.neck(inputs, feats)  # 4s
+        out = [out, F.avg_pool2d(out, kernel_size=2, stride=2)]  # high to low res
+
+        return out
+
+
 def create_backbone(model_type, norm_fn, out_channels, drop_path):
     model_type = model_type
     if model_type == "resnet":
@@ -256,6 +318,8 @@ def create_backbone(model_type, norm_fn, out_channels, drop_path):
         backbone = Hybrid()
     elif model_type == 'repvit':
         backbone = RepVitBackbone()
+    elif model_type == 'mpvit':
+        backbone = MpVitBackbone()
     else:
         raise ValueError(f"Do not find {model_type}")
 
