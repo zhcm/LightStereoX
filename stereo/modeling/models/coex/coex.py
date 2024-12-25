@@ -73,7 +73,7 @@ class CoEx(nn.Module):
         height_loss = F.smooth_l1_loss(model_preds['pred_height'][bump_mask], input_data['bump_height_map'][bump_mask], size_average=True)
 
         loss_info['scalar/train/loss_height'] = height_loss.item()
-        return loss + height_loss, loss_info
+        return loss + height_loss*10, loss_info
 
 
 class Refinement(nn.Module):

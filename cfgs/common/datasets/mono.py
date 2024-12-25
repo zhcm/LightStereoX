@@ -38,4 +38,10 @@ train_lsun = LazyCall(MonoDataset)(
     augmentations=None,
 )  # 9898281
 
+train_sa1b = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/ndj/data/DepthAnythingV2/sa-1b.txt',
+    augmentations=None,
+)  # 9898281
+
 # (1080, 1920, 3)
