@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from timm.layers import trunc_normal_
+from pathlib import Path
 
 from .ops.modules import MSDeformAttn
 from .adaptor_modules import DeformNeck
@@ -307,7 +308,8 @@ def create_backbone(model_type, norm_fn, out_channels, drop_path):
         backbone = SwinAdaptor(out_channels=out_channels, drop_path_rate=drop_path)
         pretrained = True
         if pretrained:
-            weight_url = '/mnt/nas/algorithm/chenming.zhang/github/NMRF/swin_tiny_patch4_window7_224.pth'
+            current_dir = Path(__file__).resolve()
+            weight_url = current_dir.parent.parent.parent.parent.parent / 'ckpt/swin_tiny_patch4_window7_224.pth'
             if weight_url:
                 weight = torch.load(weight_url, map_location="cpu")
                 weight = checkpoint_filter_fn(weight)
