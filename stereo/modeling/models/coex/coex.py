@@ -58,22 +58,23 @@ class CoEx(nn.Module):
     def get_loss(self, model_preds, input_data):
         disp_gt = input_data["disp"]  # [bz, h, w]
         mask = (disp_gt < self.max_disp) & (disp_gt > 0)  # [bz, h, w]
+        dilated_bump_mask = input_data['dilated_bump_mask']
+        bump_mask = input_data['bump_mask']
 
         weights = [1.0, 0.3]
 
         loss = 0.0
         for disp_est, weight in zip(model_preds['disp_preds'], weights):
-            loss += weight * F.smooth_l1_loss(disp_est[mask], disp_gt[mask], size_average=True)
+            loss += weight * F.smooth_l1_loss(disp_est[mask & dilated_bump_mask], disp_gt[mask & dilated_bump_mask], size_average=True)
 
         loss = loss * 0.77
         loss_info = {'scalar/train/loss_disp': loss.item()}
 
-        # height_loss = F.smooth_l1_loss(model_preds['pred_height'], input_data['height_map'], size_average=True)
-        bump_mask = input_data['crop_area']
         height_loss = F.smooth_l1_loss(model_preds['pred_height'][bump_mask], input_data['bump_height_map'][bump_mask], size_average=True)
-
         loss_info['scalar/train/loss_height'] = height_loss.item()
-        return loss + height_loss*10, loss_info
+        loss = loss + height_loss
+
+        return loss, loss_info
 
 
 class Refinement(nn.Module):

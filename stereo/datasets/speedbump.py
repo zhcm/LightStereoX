@@ -14,8 +14,8 @@ class SpeedBump(DatasetTemplate):
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
-        left_path, right_path, disp_path, seg_path, height, baseline, focallength = item
-        pose_txt = left_path.replace('/left/', '/left_pose/').replace('.jpg', '.txt')
+        left_path, right_path, disp_path, seg_path, height, baseline, focallength, height_path = item
+        height_map = np.load(height_path).astype(np.float32)
 
         left_img = Image.open(left_path).convert('RGB')
         left_img = np.array(left_img, dtype=np.float32)
@@ -26,38 +26,42 @@ class SpeedBump(DatasetTemplate):
         disp = np.array(Image.open(disp_path), dtype=np.float32)
         seg = np.array(Image.open(seg_path), dtype=np.float32)
         bump_mask = seg == 230
-        height = float(height)
+        height = float(height) / 100
         assert bump_mask.any()
 
         sample = {
             'left': left_img,
             'right': right_img,
             'disp': disp,
-            'bump_mask': bump_mask
+            'bump_mask': bump_mask,
+            'height_map': height_map,
+            # 'super_pixel_label': super_pixel_label
         }
 
         if self.augmentations is not None:
             for t in self.augmentations:
                 sample = t(sample)
 
-        sample['dilated_bump_mask'] = sample['bump_mask']
+        sample['dilated_bump_mask'] = np.zeros_like(sample['bump_mask'])
         if sample['bump_mask'].any():
             true_coords = np.argwhere(sample['bump_mask'])
             min_y = true_coords[:, 0].min()
             max_y = true_coords[:, 0].max()
             min_x = true_coords[:, 1].min()
             max_x = true_coords[:, 1].max()
-            new_min_y = max(0, int(min_y - (max_y - min_y)))
-            new_max_y = min(sample['bump_mask'].shape[0], int(max_y + (max_y - min_y)))
+            new_min_y = max(0, int(min_y - (max_y - min_y) / 5))
+            new_max_y = min(sample['bump_mask'].shape[0], int(max_y + (max_y - min_y) / 5))
             sample['dilated_bump_mask'][new_min_y:new_max_y, min_x:max_x] = True
 
-        sample['occ_mask'] = ~sample['dilated_bump_mask']
+        sample['bump_height_map'] = sample['height_map'].copy()
+        sample['bump_height_map'][~sample['bump_mask']] = 0
+        sample['occ_mask'] = ~sample['bump_mask']
+
         sample['valid'] = sample['disp'] < 512
         sample['height'] = height
         sample['baseline'] = float(baseline)
         sample['focallength'] = float(focallength)
 
         sample['index'] = idx
-        sample['pose_txt'] = pose_txt
 
         return sample

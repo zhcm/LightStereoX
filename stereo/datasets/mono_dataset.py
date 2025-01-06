@@ -69,7 +69,7 @@ def transfer_color(target, source):
     source_stds = source.std(0).std(0)
 
     target -= target_means
-    target /= target_stds / source_stds
+    target /= (target_stds + 1e-6) / (source_stds + 1e-6)
     target += source_means
 
     target = np.clip(target, 0, 1)
