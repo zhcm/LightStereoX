@@ -27,4 +27,5 @@ runtime_params = OmegaConf.create(
 )
 
 project_root_dir = '/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/'
+# project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/LightStereoX'
 data_root_dir = '/mnt/nas/algorithm/chenming.zhang/dataset/'

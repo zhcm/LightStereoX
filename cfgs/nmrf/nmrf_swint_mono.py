@@ -42,7 +42,8 @@ data.train_place365.augmentations = train_augmentations
 batch_size_per_gpu = 6
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_place365],
+    all_dataset=[data.train_gl, data.train_bdd, data.train_21k, data.train_lsun, data.train_sa1b,
+                 data.train_object365, data.train_openimage, data.train_place365],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -93,7 +94,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005 * batch_size_per_gpu / 2 * 2
+lr = 0.0005 * batch_size_per_gpu / 2 * 5
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
