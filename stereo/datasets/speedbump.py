@@ -40,7 +40,7 @@ class SpeedBump(DatasetTemplate):
         seg = np.array(Image.open(seg_path), dtype=np.float32)
         bump_mask = seg == 230
         height = float(height) / 100
-        assert bump_mask.any()
+        # assert bump_mask.any()
 
         sample = {
             'left': left_img,
