@@ -77,7 +77,7 @@ def main():
 
     model_pred = model(sample)
     disp_pred = model_pred['disp_pred'].squeeze().cpu().numpy()
-    init_disp = model_pred['init_disp'].squeeze().cpu().numpy()
+    # init_disp = model_pred['init_disp'].squeeze().cpu().numpy()
 
     pad_top, pad_right, pad_bottom, pad_left = sample['pad']
     h_start = pad_top
@@ -85,7 +85,7 @@ def main():
     w_start = pad_left
     w_end = None if pad_right == 0 else -pad_right
     disp_pred = disp_pred[slice(h_start, h_end), slice(w_start, w_end)]
-    init_disp = init_disp[slice(h_start, h_end), slice(w_start, w_end)]
+    # init_disp = init_disp[slice(h_start, h_end), slice(w_start, w_end)]
 
     assert disp_pred.shape[0:2] == left_img.shape[0:2]
 
@@ -100,10 +100,10 @@ def main():
     img_color = Image.fromarray(img_color)
     img_color.save(args.savename)
 
-    img_color = disp_to_color(init_disp, max_disp=192)
-    img_color = img_color.astype('uint8')
-    img_color = Image.fromarray(img_color)
-    img_color.save(args.savename[:-4] + '_init.png')
+    # img_color = disp_to_color(init_disp, max_disp=192)
+    # img_color = img_color.astype('uint8')
+    # img_color = Image.fromarray(img_color)
+    # img_color.save(args.savename[:-4] + '_init.png')
 
 
 if __name__ == '__main__':

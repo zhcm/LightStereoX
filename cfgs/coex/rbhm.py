@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.coex.coex import CoEx
+from stereo.modeling.models.coex.heightpred import HeightPred
 from stereo.solver.build import get_model_params, ClipGradValue
 
 from cfgs.common.runtime_params import runtime_params, project_root_dir
@@ -15,10 +15,6 @@ from cfgs.common.constants import constants
 
 # dataset
 train_augmentations = [
-    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
-                                             saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
-                                             asymmetric_prob=0.2),
-    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
     LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[544, 736]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
@@ -46,7 +42,7 @@ val_loader = LazyCall(build_dataloader)(
     pin_memory=True)
 
 # model
-model = LazyCall(CoEx)()
+model = LazyCall(HeightPred)()
 
 # optim
 lr = 0.0001 * batch_size_per_gpu
@@ -64,7 +60,5 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/COEX')
-runtime_params.train_epochs = 60
+runtime_params.train_epochs = 30
 runtime_params.mixed_precision = False
-runtime_params.find_unused_parameters = True
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/CoExNet_Sceneflow_Amp.pt')

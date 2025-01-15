@@ -13,13 +13,13 @@ data_root_path = os.path.join(data_root_dir, 'CarlaSpeedbumps')
 
 train = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
-    split_file='./data/SpeedBump/train.txt',
+    split_file='/mnt/nas/public_data/stereo/StereoRBHM/CarlaSpeedbumpv3/train_new.txt',
     augmentations=None
 )
 
 val = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
-    split_file='./data/SpeedBump/val.txt',
+    split_file='/mnt/nas/public_data/stereo/StereoRBHM/CarlaSpeedbumpv3/val_new.txt',
     augmentations=[
         LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)

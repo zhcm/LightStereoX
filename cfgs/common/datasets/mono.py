@@ -52,6 +52,6 @@ train_openimage = LazyCall(MonoDataset)(
 
 train_place365 = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/tools/stereoanything/places365_all.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/tools/stereoanything/places365_all_image_depth.txt',
     augmentations=None,
 )
