@@ -7,9 +7,10 @@ from .coex_backbone import CoExBackbone
 from .coex_cost_processor import CoExCostProcessor
 from .coex_disp_processor import CoExDispProcessor
 from functools import partial
+from .heightpred import Refinement
 
 
-class CoEx(nn.Module):
+class CoExHeight(nn.Module):
     def __init__(self):
         super().__init__()
         self.max_disp = 192
@@ -35,19 +36,26 @@ class CoEx(nn.Module):
                                                chans=chans)
         self.DispProcessor = CoExDispProcessor(max_disp=self.max_disp, regression_topk=regression_topk, chans=chans)
 
+        self.height_head = Refinement(in_channels=4)
+
     def forward(self, inputs):
-        """Forward the network."""
-        backbone_out = self.Backbone(inputs)
-        inputs.update(backbone_out)
-        cost_out = self.CostProcessor(inputs)
-        inputs.update(cost_out)
-        disp_out = self.DispProcessor(inputs)
+        with torch.no_grad():
+            """Forward the network."""
+            backbone_out = self.Backbone(inputs)
+            inputs.update(backbone_out)
+            cost_out = self.CostProcessor(inputs)
+            inputs.update(cost_out)
+            disp_out = self.DispProcessor(inputs)
 
         if self.training:
+            pred_height = self.height_head(torch.cat([inputs["left"], disp_out['disp_ests'][0].unsqueeze(1)], dim=1))
             return {'disp_preds': disp_out['disp_ests'],
-                    'disp_pred': disp_out['disp_ests'][0]}
+                    'disp_pred': disp_out['disp_ests'][0],
+                    'pred_height': pred_height.squeeze(1)}
         else:
-            return {'disp_pred': disp_out['inference_disp']['disp_est']}
+            pred_height = self.height_head(torch.cat([inputs["left"], disp_out['inference_disp']['disp_est'].unsqueeze(1)], dim=1))
+            return {'disp_pred': disp_out['inference_disp']['disp_est'],
+                    'pred_height': pred_height.squeeze(1)}
 
     def get_loss(self, model_preds, input_data):
         disp_gt = input_data["disp"]  # [bz, h, w]
@@ -55,13 +63,15 @@ class CoEx(nn.Module):
         dilated_bump_mask = input_data['dilated_bump_mask']
         bump_mask = input_data['bump_mask']
 
-        weights = [1.0, 0.3]
+        # weights = [1.0, 0.3]
+        # loss = 0.0
+        # for disp_est, weight in zip(model_preds['disp_preds'], weights):
+        #     loss += weight * F.smooth_l1_loss(disp_est[mask & dilated_bump_mask], disp_gt[mask & dilated_bump_mask], size_average=True)
+        # loss = loss * 0.77
+        # loss_info = {'scalar/train/loss_disp': loss.item()}
 
-        loss = 0.0
-        for disp_est, weight in zip(model_preds['disp_preds'], weights):
-            loss += weight * F.smooth_l1_loss(disp_est[mask & dilated_bump_mask], disp_gt[mask & dilated_bump_mask], size_average=True)
-
-        loss = loss * 0.77
-        loss_info = {'scalar/train/loss_disp': loss.item()}
+        height_loss = F.smooth_l1_loss(model_preds['pred_height'][bump_mask], input_data['bump_height_map'][bump_mask], size_average=True)
+        loss_info = {'scalar/train/loss_height': height_loss.item()}
+        loss = height_loss
 
         return loss, loss_info
