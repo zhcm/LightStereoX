@@ -231,6 +231,7 @@ class IGEVStereo(nn.Module):
     def get_loss(self, model_pred, input_data):
         disp_gt = input_data["disp"]
         mask = (disp_gt < self.max_disp) & (disp_gt > 0)
+        dilated_bump_mask = input_data['dilated_bump_mask'].unsqueeze(1)
         valid = mask.float()
 
         disp_gt = disp_gt.unsqueeze(1)
@@ -240,7 +241,7 @@ class IGEVStereo(nn.Module):
         assert not torch.isinf(disp_gt[valid.bool()]).any()
 
         disp_init_pred = model_pred['init_disp']
-        disp_loss = 1.0 * F.smooth_l1_loss(disp_init_pred[valid.bool()], disp_gt[valid.bool()], reduction='mean')
+        disp_loss = 1.0 * F.smooth_l1_loss(disp_init_pred[valid.bool() * dilated_bump_mask], disp_gt[valid.bool() & dilated_bump_mask], reduction='mean')
 
         # gru loss
         loss_gamma = 0.9
@@ -252,7 +253,7 @@ class IGEVStereo(nn.Module):
             i_weight = adjusted_loss_gamma ** (n_predictions - i - 1)
             i_loss = (disp_preds[i] - disp_gt).abs()
             assert i_loss.shape == valid.shape, [i_loss.shape, valid.shape, disp_gt.shape, disp_preds[i].shape]
-            disp_loss += i_weight * i_loss[valid.bool()].mean()
+            disp_loss += i_weight * i_loss[valid.bool() & dilated_bump_mask].mean()
 
         loss_info = {'scalar/train/loss_disp': disp_loss.item()}
         return disp_loss, loss_info
