@@ -9,6 +9,7 @@ from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.coex.heightpred import HeightPred
 from stereo.solver.build import get_model_params, ClipGradValue
+from stereo.solver.trainer_rbhm import RBHMTrainer
 
 from cfgs.common.runtime_params import runtime_params, project_root_dir
 from cfgs.common.constants import constants
@@ -24,7 +25,7 @@ speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
 speedbump.train.augmentations = train_augmentations
 
 # dataloader
-batch_size_per_gpu = 4
+batch_size_per_gpu = 8
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[speedbump.train],
@@ -45,7 +46,7 @@ val_loader = LazyCall(build_dataloader)(
 model = LazyCall(HeightPred)()
 
 # optim
-lr = 0.0001 * batch_size_per_gpu
+lr = 0.0001 * batch_size_per_gpu / 2
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -58,7 +59,9 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
+trainer = LazyCall(RBHMTrainer)(args=None, cfg=None, logger=None, tb_writer=None)
+
 # runtime params
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/COEX')
-runtime_params.train_epochs = 30
+runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False

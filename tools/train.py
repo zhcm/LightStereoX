@@ -11,6 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 from stereo.utils import common_utils
 from stereo.solver.trainer import Trainer
 from stereo.config.lazy import LazyConfig
+from stereo.config.instantiate import instantiate
 
 
 def parse_config():
@@ -89,7 +90,14 @@ def main():
     args.local_rank = local_rank
     args.global_rank = global_rank
     args.ckpt_dir = ckpt_dir
-    model_trainer = Trainer(args, cfg, logger, tb_writer)
+    if 'trainer' in cfg:
+        cfg.trainer.args = args
+        cfg.trainer.cfg = cfg
+        cfg.trainer.logger = logger
+        cfg.trainer.tb_writer = tb_writer
+        model_trainer = instantiate(cfg.trainer)
+    else:
+        model_trainer = Trainer(args, cfg, logger, tb_writer)
 
     tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.runtime_params.train_epochs,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
