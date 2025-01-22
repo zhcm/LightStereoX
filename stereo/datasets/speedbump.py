@@ -15,7 +15,7 @@ class SpeedBump(DatasetTemplate):
     def __getitem__(self, idx):
         item = self.data_list[idx]
         left_path, right_path, disp_path, seg_path, height, baseline, focallength, height_path = item
-        height_map = np.load(height_path).astype(np.float32)
+        height_map = np.load(height_path).astype(np.float32) * 100  # cm
 
         left_img = Image.open(left_path).convert('RGB')
         left_img = np.array(left_img, dtype=np.float32)
@@ -39,7 +39,7 @@ class SpeedBump(DatasetTemplate):
         disp = np.array(Image.open(disp_path), dtype=np.float32)
         seg = np.array(Image.open(seg_path), dtype=np.float32)
         bump_mask = seg == 230
-        height = float(height) / 100
+        height = float(height)  # cm
         # assert bump_mask.any()
 
         sample = {
@@ -68,7 +68,7 @@ class SpeedBump(DatasetTemplate):
 
         sample['bump_height_map'] = sample['height_map'].copy()
         sample['bump_height_map'][~sample['bump_mask']] = 0
-        sample['occ_mask'] = ~sample['bump_mask']
+        # sample['occ_mask'] = ~sample['bump_mask']
 
         sample['valid'] = sample['disp'] < 512
         sample['height'] = height
