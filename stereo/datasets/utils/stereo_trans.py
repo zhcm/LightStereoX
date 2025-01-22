@@ -26,6 +26,8 @@ class RandomCrop(object):
         y2 = y1 + np.random.randint(-n_pixels, n_pixels + 1)
 
         for k in sample.keys():
+            if k in ['pad']:
+                continue
             if k in ['right', 'disp_right', 'occ_mask_right']:
                 sample[k] = sample[k][y2: y2 + crop_height, x1: x1 + crop_width]
             else:
@@ -93,7 +95,7 @@ class ConstantPad(object):
                 pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
                 sample[k] = np.pad(sample[k], pad_width, 'edge')
 
-            elif k in ['disp', 'disp_right', 'occ_mask', 'occ_mask_right']:
+            elif k in ['disp', 'disp_right', 'occ_mask', 'occ_mask_right', 'bump_mask', 'height_map']:
                 pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right]])
                 sample[k] = np.pad(sample[k], pad_width, 'constant', constant_values=0)
 
@@ -274,13 +276,20 @@ class RandomSparseScale(object):
         scale = 2 ** np.random.uniform(self.min_pow_scale, self.max_pow_scale)
         scale = max(scale, floor_scale)
 
+        # valid_img = sample['disp'] > 0.0
         if np.random.rand() < self.prob:
             for k in sample.keys():
                 if k in ['left', 'right']:
                     sample[k] = cv2.resize(sample[k], dsize=None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
                 elif k in ['disp', 'disp_right']:
-                    sample[k] = self.sparse_disp_map_reisze(sample[k], fx=scale, fy=scale)
+                    sample[k], valid_img = self.sparse_disp_map_reisze(sample[k], fx=scale, fy=scale)
+                elif k in ['occ_mask', 'occ_mask_2']:
+                    sample[k] = cv2.resize(sample[k].astype(np.float32), None, fx=scale, fy=scale,
+                                           interpolation=cv2.INTER_NEAREST) > 0.5
+                elif k in ['super_pixel_label']:
+                    sample[k] = cv2.resize(sample[k], None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
 
+        sample['valid'] = valid_img > 0
         return sample
 
     @staticmethod
@@ -311,4 +320,7 @@ class RandomSparseScale(object):
         resized_disp = np.zeros([h_new, w_new], dtype=np.float32)
         resized_disp[coords_y, coords_x] = disp
 
-        return resized_disp
+        valid_img = np.zeros([h_new, w_new], dtype=np.int32)
+        valid_img[coords_y, coords_x] = 1
+
+        return resized_disp, valid_img
