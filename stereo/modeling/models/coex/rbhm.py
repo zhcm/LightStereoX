@@ -69,11 +69,13 @@ class HeightPred(nn.Module):
 
     def forward(self, inputs):
         pred_height = self.height_head(torch.cat([inputs["left"], inputs['disp'].unsqueeze(1)], dim=1))
+        pred_height = torch.sigmoid(pred_height) * 10
         return {'pred_height': pred_height.squeeze(1)}
 
-    def get_loss(self, model_preds, input_data):
+    @staticmethod
+    def get_loss(model_preds, input_data):
         dilated_bump_mask = input_data['dilated_bump_mask']
         bump_mask = input_data['bump_mask']
-        height_loss = F.smooth_l1_loss(model_preds['pred_height'][bump_mask], input_data['bump_height_map'][bump_mask], size_average=True)
+        height_loss = F.smooth_l1_loss(model_preds['pred_height'][bump_mask], input_data['height_map'][bump_mask], size_average=True)
         loss_info = {'scalar/train/loss_height': height_loss.item()}
         return height_loss, loss_info

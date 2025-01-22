@@ -38,6 +38,12 @@ class CoExHeight(nn.Module):
 
         self.height_head = Refinement(in_channels=4)
 
+        pretrained_state_dict = torch.load('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/SpeedBump/COEX/heightpred-e/ckpt/epoch_59/pytorch_model.bin', map_location='cpu')
+        state_dict = {}
+        for key, val in pretrained_state_dict.items():
+            state_dict[key.replace('height_head.', '')] = val
+        self.height_head.load_state_dict(state_dict)
+
     def forward(self, inputs):
         with torch.no_grad():
             """Forward the network."""
@@ -49,11 +55,13 @@ class CoExHeight(nn.Module):
 
         if self.training:
             pred_height = self.height_head(torch.cat([inputs["left"], disp_out['disp_ests'][0].unsqueeze(1)], dim=1))
+            pred_height = torch.sigmoid(pred_height) * 10
             return {'disp_preds': disp_out['disp_ests'],
                     'disp_pred': disp_out['disp_ests'][0],
                     'pred_height': pred_height.squeeze(1)}
         else:
             pred_height = self.height_head(torch.cat([inputs["left"], disp_out['inference_disp']['disp_est'].unsqueeze(1)], dim=1))
+            pred_height = torch.sigmoid(pred_height) * 10
             return {'disp_pred': disp_out['inference_disp']['disp_est'],
                     'pred_height': pred_height.squeeze(1)}
 
