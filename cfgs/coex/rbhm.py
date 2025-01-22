@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.coex.heightpred import HeightPred
+from stereo.modeling.models.coex.rbhm import HeightPred
 from stereo.solver.build import get_model_params, ClipGradValue
 from stereo.solver.trainer_rbhm import RBHMTrainer
 
@@ -62,6 +62,6 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 trainer = LazyCall(RBHMTrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/COEX')
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/RBHM')
 runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False
