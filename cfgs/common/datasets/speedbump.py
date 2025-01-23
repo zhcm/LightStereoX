@@ -25,6 +25,7 @@ trainv3 = LazyCall(SpeedBump)(
 
 val = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
+    # split_file='/mnt/data/home/ruilin.wang/tools/speedbump/v2/val.txt',
     split_file='/mnt/nas/public_data/stereo/StereoRBHM/CarlaSpeedbumpv3/val_new.txt',
     # split_file='/mnt/data/home/ruilin.wang/tools/speedbump/val_bisenet.txt',
     augmentations=[
