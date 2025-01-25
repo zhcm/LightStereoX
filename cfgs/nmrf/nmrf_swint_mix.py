@@ -26,10 +26,6 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-# sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')  # 35454
-# sceneflow.train.augmentations = train_augmentations
-# sceneflow.train.return_right_disp = False
-
 carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
 carla.train.augmentations = train_augmentations
 
@@ -72,15 +68,12 @@ sintel.train.augmentations = train_augmentations
 # nerfstereo = LazyConfig.load('cfgs/common/datasets/nerfstereo.py')  # 80484
 # nerfstereo.train.augmentations = train_augmentations
 
-mono = LazyConfig.load('cfgs/common/datasets/mono.py')
-mono.train_gl.augmentations = train_augmentations
-
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train, mono.train_gl],
+                 tartanair.train, sintel.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -132,20 +125,18 @@ model = LazyCall(NMRF)(
     criterion=criterion)
 
 # optim
-lr = 0.0005 * 2
+lr = 0.0005 * batch_size_per_gpu / 2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
-# total_steps = 81000
-scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.05,
+total_steps = 81000
+scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=total_steps, pct_start=0.05,
                                  cycle_momentum=False, anneal_strategy='cos')
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=83500, all_batchsize=16, lr=0.0005
-# 552057 + 144900 + 200000 + 61500 + 2010 + 306637 + 1064 + 5000 + 21260 = 1294428
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = 5
-# runtime_params.max_iter = total_steps
+runtime_params.train_epochs = 2
+runtime_params.max_iter = total_steps
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
