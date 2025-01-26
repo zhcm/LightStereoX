@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import glob
+import math
 import torch
 import torch.nn as nn
 import torch.distributed as dist
@@ -39,6 +40,9 @@ class Trainer:
             cfg.train_loader.is_dist = args.dist_mode
             self.train_set, self.train_loader, self.train_sampler = instantiate(cfg.train_loader)
             self.logger.info('Total samples for train dataset: %d' % (len(self.train_set)))
+            self.logger.info('Length of train loader: %d' % (len(self.train_loader)))
+            if 'max_iter' in cfg.runtime_params:
+                cfg.runtime_params.train_epochs = math.ceil(cfg.runtime_params.max_iter / len(self.train_loader))
 
             # optimizer
             cfg.optimizer.params.model = self.model
@@ -47,7 +51,10 @@ class Trainer:
             # scheduler
             cfg.scheduler.optimizer = self.optimizer
             if 'total_steps' in self.cfg.scheduler and cfg.scheduler.total_steps == -1:
-                cfg.scheduler.total_steps = cfg.runtime_params.train_epochs * len(self.train_loader)
+                if 'max_iter' in cfg.runtime_params:
+                    cfg.scheduler.total_steps = cfg.runtime_params.max_iter
+                else:
+                    cfg.scheduler.total_steps = cfg.runtime_params.train_epochs * len(self.train_loader)
             self.scheduler = instantiate(cfg.scheduler)
 
             # scaler
