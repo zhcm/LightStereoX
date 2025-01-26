@@ -106,7 +106,7 @@ def main():
     for current_epoch in tbar:
         model_trainer.train(current_epoch, tbar)
         model_trainer.save_ckpt(current_epoch)
-        if current_epoch % cfg.runtime_params.eval_period == 0 or current_epoch == cfg.runtime_params.train_epochs - 1:
+        if current_epoch % cfg.runtime_params.eval_period == 0:
             model_trainer.evaluate(current_epoch)
 
 
