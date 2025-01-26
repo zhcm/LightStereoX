@@ -167,7 +167,7 @@ class Trainer:
         train_loader_iter = iter(self.train_loader)
         for i in range(0, len(self.train_loader)):
 
-            current_iter = current_epoch * len(self.train_loader) + i
+            current_iter = (current_epoch - 1) * len(self.train_loader) + i
             if current_iter >= self.cfg.runtime_params.get('max_iter', 1e10):
                 self.logger.info('Max iter reached.')
                 break
@@ -208,7 +208,7 @@ class Trainer:
 
             # logging
             total_loss += loss.item()
-            total_iter = current_epoch * len(self.train_loader) + i
+            total_iter = (current_epoch - 1) * len(self.train_loader) + i
             trained_time_past_all = tbar.format_dict['elapsed']
             single_iter_second = trained_time_past_all / (total_iter + 1 - self.last_epoch * len(self.train_loader))
             remaining_second_all = single_iter_second * (total_epochs * len(self.train_loader) - total_iter - 1)
