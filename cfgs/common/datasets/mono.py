@@ -3,6 +3,7 @@
 import os
 from stereo.config.lazy import LazyCall
 from stereo.datasets.mono_dataset import MonoDataset
+from stereo.datasets.realfill_dataset import RealfillDataset
 
 from cfgs.common.runtime_params import data_root_dir
 
@@ -17,6 +18,12 @@ train_gl = LazyCall(MonoDataset)(
 train_bdd = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/bdd100k.txt',
+    augmentations=None,
+)  # 100000
+
+train_bdd_realfill = LazyCall(RealfillDataset)(
+    data_root_path=data_root_path,
+    split_file='/mnt/nas/algorithm/chenming.zhang/misc/realfill.txt',
     augmentations=None,
 )  # 100000
 
