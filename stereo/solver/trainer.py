@@ -22,7 +22,7 @@ class Trainer:
         self.tb_writer = tb_writer
         self.local_rank = args.local_rank
         self.global_rank = args.global_rank
-        self.last_epoch = -1
+        self.last_epoch = 0
         self.clip_gard = None
         self.warmup = None
 
@@ -67,7 +67,7 @@ class Trainer:
             # warmup
             if 'warmup' in cfg:
                 cfg.warmup.optimizer = self.optimizer
-                cfg.warmup.last_step = (self.last_epoch + 1) * len(self.train_loader) - 1
+                cfg.warmup.last_step = self.last_epoch * len(self.train_loader) - 1
                 self.warmup = instantiate(cfg.warmup)
 
             # clip grad
@@ -160,7 +160,6 @@ class Trainer:
             dist.barrier()
 
     def train_one_epoch(self, current_epoch, tbar):
-        start_epoch = self.last_epoch + 1
         total_epochs = self.cfg.runtime_params.train_epochs
         total_loss = 0.0
         loss_func = self.model.module.get_loss if self.args.dist_mode else self.model.get_loss
@@ -211,7 +210,7 @@ class Trainer:
             total_loss += loss.item()
             total_iter = current_epoch * len(self.train_loader) + i
             trained_time_past_all = tbar.format_dict['elapsed']
-            single_iter_second = trained_time_past_all / (total_iter + 1 - start_epoch * len(self.train_loader))
+            single_iter_second = trained_time_past_all / (total_iter + 1 - self.last_epoch * len(self.train_loader))
             remaining_second_all = single_iter_second * (total_epochs * len(self.train_loader) - total_iter - 1)
             if total_iter % self.cfg.runtime_params.log_period == 0:
                 loss_message = ''

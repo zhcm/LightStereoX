@@ -99,7 +99,7 @@ def main():
     else:
         model_trainer = Trainer(args, cfg, logger, tb_writer)
 
-    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.runtime_params.train_epochs,
+    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.runtime_params.train_epochs + 1,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
                        bar_format='{l_bar}{bar}{r_bar}\n')
     # train loop
