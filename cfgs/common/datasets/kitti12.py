@@ -9,7 +9,7 @@ from stereo.datasets import build_dataloader
 from cfgs.common.runtime_params import data_root_dir
 from cfgs.common.constants import constants
 
-data_root_path = os.path.join(data_root_dir, 'KITTI/stereo_2012')
+data_root_path = os.path.join(data_root_dir, 'kitti12')
 
 train = LazyCall(KittiDataset)(
     data_root_path=data_root_path,
