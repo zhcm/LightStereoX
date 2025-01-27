@@ -50,30 +50,20 @@ tartanair.train.augmentations = train_augmentations
 sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
-# spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
-# spring.train.augmentations = train_augmentations
-# spring.train.return_right_disp = False
-#
-# virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
-# virtualkitti2.train.augmentations = train_augmentations
-# virtualkitti2.train.return_right_disp = False
+spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
+spring.train.augmentations = train_augmentations
+spring.train.return_right_disp = False
 
-# argoverse = LazyConfig.load('cfgs/common/datasets/argoverse.py')  # 5530
-# argoverse.train.augmentations = train_augmentations
-
-# unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')  # 8200
-# unrealstereo4k.train.augmentations = train_augmentations
-# unrealstereo4k.train.return_right_disp = False
-
-# nerfstereo = LazyConfig.load('cfgs/common/datasets/nerfstereo.py')  # 80484
-# nerfstereo.train.augmentations = train_augmentations
+virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
+virtualkitti2.train.augmentations = train_augmentations
+virtualkitti2.train.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train],
+                 tartanair.train, sintel.train, spring.train, virtualkitti2.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -129,14 +119,12 @@ lr = 0.0005 * batch_size_per_gpu / 2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
-total_steps = 81000
-scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=total_steps, pct_start=0.05,
+scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_start=0.05,
                                  cycle_momentum=False, anneal_strategy='cos')
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
-runtime_params.train_epochs = 2
-runtime_params.max_iter = total_steps
+runtime_params.max_iter = 81000
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
