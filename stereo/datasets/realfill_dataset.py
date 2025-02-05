@@ -21,11 +21,11 @@ class RealfillDataset(DatasetTemplate):
         full_paths = [os.path.join(self.root, x) for x in item]
         left_path, right_path, disp_path = full_paths
 
-        left_img = Image.open(left_path.replace('/mnt/data/home/ruilin.wang/data/realfill', '/mnt/nas/algorithm/chenming.zhang/misc')).convert('RGB')
+        left_img = Image.open(left_path).convert('RGB')
         left_img = np.array(left_img, dtype=np.float32)
-        right_img = Image.open(right_path.replace('/mnt/data/home/ruilin.wang/data/realfill', '/mnt/nas/algorithm/chenming.zhang/misc')).convert('RGB')
+        right_img = Image.open(right_path).convert('RGB')
         right_img = np.array(right_img, dtype=np.float32)
-        disp_img = np.load(disp_path.replace('/mnt/data/home/ruilin.wang/data/realfill', '/mnt/nas/algorithm/chenming.zhang/misc')).astype(np.float32)
+        disp_img = np.load(disp_path).astype(np.float32)
         occ_mask = np.zeros_like(disp_img, dtype=bool)
 
         sample = {

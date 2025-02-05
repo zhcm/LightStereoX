@@ -13,6 +13,9 @@ from stereo.config.lazy import LazyConfig
 from stereo.utils import common_utils
 from stereo.solver.trainer import Trainer
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
