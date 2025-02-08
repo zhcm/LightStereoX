@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.coex.coexheight import CoExHeight
+from stereo.modeling.models.coex.coexrbhm import CoExHeight
 from stereo.solver.build import get_model_params, ClipGradValue
 
 from cfgs.common.runtime_params import runtime_params, project_root_dir

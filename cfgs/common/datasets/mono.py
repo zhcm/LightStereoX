@@ -27,6 +27,12 @@ train_bdd_realfill = LazyCall(RealfillDataset)(
     augmentations=None,
 )  # 100000
 
+train_bdd_crop = LazyCall(MonoDataset)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/bdd100k/crop.txt',
+    augmentations=None,
+)  # 100000
+
 train_21k = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/imagenet21k.txt',

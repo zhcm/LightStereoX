@@ -1,7 +1,6 @@
 # @Time    : 2024/10/8 02:37
 # @Author  : zhangchenming
 import os
-import math
 from torch.optim.lr_scheduler import OneCycleLR
 
 from stereo.config.lazy import LazyCall, LazyConfig
@@ -26,7 +25,7 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
 carla.train.augmentations = train_augmentations
 
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
@@ -62,8 +61,7 @@ virtualkitti2.train.return_right_disp = False
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train, spring.train, virtualkitti2.train],
+    all_dataset=[tartanair.train, carla.train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,

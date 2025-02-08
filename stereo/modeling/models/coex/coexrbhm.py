@@ -7,7 +7,7 @@ from .coex_backbone import CoExBackbone
 from .coex_cost_processor import CoExCostProcessor
 from .coex_disp_processor import CoExDispProcessor
 from functools import partial
-from .heightpred import Refinement
+from .rbhm import Refinement
 
 
 class CoExHeight(nn.Module):

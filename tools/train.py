@@ -4,6 +4,7 @@ import os
 import argparse
 import datetime
 import tqdm
+import shutil
 import torch
 import torch.distributed as dist
 
@@ -13,12 +14,16 @@ from stereo.solver.trainer import Trainer
 from stereo.config.lazy import LazyConfig
 from stereo.config.instantiate import instantiate
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
     parser.add_argument('--dist_mode', action='store_true', default=False, help='torchrun ddp multi gpu')
     parser.add_argument('--cfg_file', type=str, default=None, required=True, help='specify the config for training')
     parser.add_argument('--extra_tag', type=str, default='debug', help='extra tag for this experiment')
+    parser.add_argument('--cover_old_exp', action='store_true', default=False)
 
     args = parser.parse_args()
     cfg = LazyConfig.load(args.cfg_file)
@@ -47,6 +52,10 @@ def main():
 
     # savedir
     output_dir = str(os.path.join(cfg.runtime_params.save_root_dir, args.extra_tag))
+    if os.path.exists(output_dir) and args.cover_old_exp and global_rank == 0:
+        shutil.rmtree(output_dir)
+    if args.dist_mode:
+        dist.barrier()
     if os.path.exists(output_dir) and args.extra_tag != 'debug' and cfg.runtime_params.resume_from_ckpt == -1:
         raise Exception('There is already an exp with this name')
     if args.dist_mode:

@@ -61,7 +61,7 @@ def infer_time(model, shape):
         for _ in tqdm(range(repetitions)):
             infer_start = time.perf_counter()
             result = model(inputs)
-            print(result.keys())
+            # print(result.keys())
             all_time += time.perf_counter() - infer_start
 
     print(all_time / repetitions * 1000)

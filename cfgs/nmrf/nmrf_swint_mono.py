@@ -31,6 +31,7 @@ sintel.train.augmentations = train_augmentations
 data = LazyConfig.load('cfgs/common/datasets/mono.py')
 data.train_gl.augmentations = train_augmentations
 data.train_bdd.augmentations = train_augmentations
+data.train_bdd_crop.augmentations = train_augmentations
 data.train_21k.augmentations = train_augmentations
 data.train_lsun.augmentations = train_augmentations
 data.train_sa1b.augmentations = train_augmentations
