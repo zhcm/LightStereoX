@@ -167,6 +167,8 @@ class Trainer:
         train_loader_iter = iter(self.train_loader)
         for i in range(0, len(self.train_loader)):
 
+            # if i % 2000 == 0 and i != 0:
+            #     self.save_ckpt(current_epoch=i)
             current_iter = (current_epoch - 1) * len(self.train_loader) + i
             if current_iter >= self.cfg.runtime_params.get('max_iter', 1e10):
                 self.logger.info('Max iter reached.')

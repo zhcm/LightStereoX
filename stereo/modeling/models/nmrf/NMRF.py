@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from timm.models.layers import trunc_normal_
 
+from stereo.utils import common_utils
 from .utils.frame_utils import InputPadder, downsample_disp
 from .config import configurable
 from .matcher import bf_match
@@ -285,6 +286,11 @@ class NMRF(nn.Module):
         weight_dict = self.criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
         loss_info = {'scalar/train/loss_disp': losses.item()}
+
+        imagenet_rgb_mean = torch.tensor([123.675, 116.28, 103.53]).cuda().unsqueeze(dim=1).unsqueeze(dim=2)
+        imagenet_rgb_std = torch.tensor([58.395, 57.12, 57.375]).cuda().unsqueeze(dim=1).unsqueeze(dim=2)
+        loss_info['image/train/image'] = torch.cat([input_data['left'][0] * imagenet_rgb_std + imagenet_rgb_mean, input_data['right'][0] * imagenet_rgb_std + imagenet_rgb_mean], dim=1) / 256
+        loss_info['image/train/disp'] = common_utils.color_map_tensorboard(input_data['disp'][0], model_pred['disp_pred'].squeeze(1)[0])
 
         return losses, loss_info
 

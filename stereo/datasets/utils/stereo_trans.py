@@ -36,6 +36,65 @@ class RandomCrop(object):
         return sample
 
 
+class KittiRandomCrop(object):
+    def __init__(self, crop_size, y_jitter=False):
+        self.crop_size = crop_size
+        self.base_size = crop_size
+        self.y_jitter = y_jitter
+
+    def __call__(self, sample):
+        crop_height, crop_width = self.crop_size
+        height, width = sample['left'].shape[:2]  # (H, W, 3)
+        if crop_width > width or crop_height > height:
+            return sample
+
+        margin_y = 20
+        margin_x = 50
+
+        y1 = np.random.randint(0, height - crop_height + margin_y)
+        x1 = np.random.randint(-margin_x, width - crop_width + margin_x)
+
+        y1 = np.clip(y1, 0, height - crop_height)
+        x1 = np.clip(x1, 0, width - crop_width)
+
+        for k in sample.keys():
+            sample[k] = sample[k][y1: y1 + crop_height, x1: x1 + crop_width]
+
+        return sample
+
+
+class ShiftRandomCrop(object):
+    # crop的位置向左偏，视差变大, shift=old-new,shift>0,向右
+    def __init__(self, crop_size, shift):
+        self.crop_size = crop_size
+        self.shift = shift
+
+    def __call__(self, sample):
+        crop_height, crop_width = self.crop_size
+        height, width = sample['left'].shape[:2]  # (H, W, 3)
+        if crop_width > width or crop_height > height:
+            return sample
+
+        y1 = np.random.randint(0, height - crop_height + 1)
+        x1 = np.random.randint(0, width - crop_width + 1)
+
+        if self.shift >= 0:
+            x2_right = min(x1 + self.shift + crop_width, width)
+            x1_right = x2_right - crop_width
+        else:
+            x1_right = max(x1 + self.shift, 0)
+
+        for k in sample.keys():
+            if k in ['right']:
+                sample[k] = sample[k][y1: y1 + crop_height, x1_right: x1_right + crop_width]
+            else:
+                sample[k] = sample[k][y1: y1 + crop_height, x1: x1 + crop_width]
+
+        sample['disp'] = sample['disp'] + x1_right - x1
+
+        return sample
+
+
 class ConstantCrop(object):
     def __init__(self, crop_size, mode='tl'):
         self.size = crop_size
