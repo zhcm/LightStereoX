@@ -3,5 +3,5 @@
 **.DS_Store**
 submit.py
 test.py
-tools/scripts/eval.sh
+tools/convert.py
 tools/scripts/eval_local.sh
