@@ -11,13 +11,13 @@ data_root_path = os.path.join(data_root_dir, 'depthAnythingData')
 
 train_gl = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/google_landmarks.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/GoogleLandmarks.txt',
     augmentations=None,
 )  # 4976922
 
 train_bdd = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/bdd100k.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/bdd100k.txt',
     augmentations=None,
 )  # 100000
 
