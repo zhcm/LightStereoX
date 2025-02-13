@@ -37,8 +37,7 @@ class CoExHeight(nn.Module):
         self.DispProcessor = CoExDispProcessor(max_disp=self.max_disp, regression_topk=regression_topk, chans=chans)
 
         self.height_head = Refinement(in_channels=4)
-
-        pretrained_state_dict = torch.load('/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/output/SpeedBump/COEX/heightpred-e/ckpt/epoch_59/pytorch_model.bin', map_location='cpu')
+        pretrained_state_dict = torch.load('/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX/output/SpeedBumpDataset/RBHM/bumpmask_v3dataset/ckpt/epoch_60/pytorch_model.bin', map_location='cpu')
         state_dict = {}
         for key, val in pretrained_state_dict.items():
             state_dict[key.replace('height_head.', '')] = val

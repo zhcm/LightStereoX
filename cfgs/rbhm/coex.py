@@ -25,13 +25,13 @@ train_augmentations = [
 ]
 
 speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
-speedbump.train.augmentations = train_augmentations
+speedbump.trainv3.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.train],
+    all_dataset=[speedbump.trainv3],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -63,7 +63,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBump/COEX')
+runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBumpDataset/COEX')
 runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True
