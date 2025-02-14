@@ -58,13 +58,13 @@ virtualkitti2.train.augmentations = train_augmentations
 virtualkitti2.train.return_right_disp = False
 
 mono = LazyConfig.load('cfgs/common/datasets/mono.py')
-mono.train_gl.augmentations = train_augmentations
+mono.train_object365.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[tartanair.train, carla.train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_gl],
+    all_dataset=[tartanair.train, carla.train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_object365],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -128,4 +128,4 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
 runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/MonoDataset/NMRF/google_landmarks_2nodes/ckpt/epoch_1/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/MonoDataset/NMRF/object365_2nodes/ckpt/epoch_1/pytorch_model.bin')

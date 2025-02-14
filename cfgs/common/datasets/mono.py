@@ -13,58 +13,58 @@ train_gl = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/GoogleLandmarks.txt',
     augmentations=None,
-)  # 4976922
+)  # 4976922 4976143
 
 train_bdd = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
     split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/bdd100k.txt',
     augmentations=None,
-)  # 100000
+)  # 100000 99717
 
-train_bdd_realfill = LazyCall(RealfillDataset)(
-    data_root_path=data_root_path,
-    split_file='/mnt/nas/algorithm/chenming.zhang/misc/realfill.txt',
-    augmentations=None,
-)  # 100000
-
-train_bdd_crop = LazyCall(MonoDataset)(
-    data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/bdd100k/crop.txt',
-    augmentations=None,
-)  # 100000
+# train_bdd_realfill = LazyCall(RealfillDataset)(
+#     data_root_path=data_root_path,
+#     split_file='/mnt/nas/algorithm/chenming.zhang/misc/realfill.txt',
+#     augmentations=None,
+# )  # 100000
+#
+# train_bdd_crop = LazyCall(MonoDataset)(
+#     data_root_path=data_root_path,
+#     split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/bdd100k/crop.txt',
+#     augmentations=None,
+# )  # 100000
 
 train_21k = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/imagenet21k.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/imagenet21k_resize.txt',
     augmentations=None,
-)  # 13145689
+)  # 13145689 13150758
 
 train_object365 = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/object365.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/objects365_resize.txt',
     augmentations=None,
-)  # 2168460
+)  # 2168460 2007977
 
 train_lsun = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/lsun.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/lsun_resize.txt',
     augmentations=None,
-)  # 9898281
+)  # 9898281 9898284
 
 train_sa1b = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/sa-1b.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/sa-1b.txt',
     augmentations=None,
-)  # 9898281
+)
 
 train_openimage = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/depthAnythingData/txt_path_files/openimage.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/openimage.txt',
     augmentations=None,
-)
+)  # 1910098
 
 train_place365 = LazyCall(MonoDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/tools/stereoanything/places365_all_image_depth.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/places365.txt',
     augmentations=None,
-)
+)  # 2168460

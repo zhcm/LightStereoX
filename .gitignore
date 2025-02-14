@@ -5,3 +5,4 @@ submit.py
 test.py
 tools/convert.py
 tools/scripts/eval_local.sh
+tools/scripts/env.sh
