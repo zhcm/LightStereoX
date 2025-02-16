@@ -41,7 +41,7 @@ class Trainer:
             self.train_set, self.train_loader, self.train_sampler = instantiate(cfg.train_loader)
             self.logger.info('Total samples for train dataset: %d' % (len(self.train_set)))
             self.logger.info('Length of train loader: %d' % (len(self.train_loader)))
-            if 'max_iter' in cfg.runtime_params:
+            if 'max_iter' in cfg.runtime_params and cfg.runtime_params.max_iter > 0:
                 cfg.runtime_params.train_epochs = math.ceil(cfg.runtime_params.max_iter / len(self.train_loader))
 
             # optimizer
