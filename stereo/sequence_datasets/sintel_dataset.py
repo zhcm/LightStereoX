@@ -24,10 +24,9 @@ def disparity_reader(file_name):
 
 
 class SequenceSintelDataset(SequenceDatasetTemplate):
-    def __init__(self, data_root_path, dataset_type, sample_len, augmentations):
+    def __init__(self, data_root_path, dataset_type, augmentations):
         super().__init__(data_root_path, augmentations)
         self.dataset_type = dataset_type
-        self.sample_len = sample_len
 
         image_root = os.path.join(data_root_path, "training")
         image_dirs = defaultdict(list)
@@ -67,6 +66,7 @@ class SequenceSintelDataset(SequenceDatasetTemplate):
 
             disp, valid_disp = disparity_reader(sample["disparity"]["left"][i])
             disp = np.array(disp).astype(np.float32)
+            valid_disp = np.array(valid_disp).astype(np.float32)
             output["disp"][i].append(-disp)
             output["valid_disp"][i].append(valid_disp)
 

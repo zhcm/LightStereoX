@@ -3,7 +3,7 @@
 import os
 from stereo.config.lazy import LazyCall
 from stereo.sequence_datasets.sintel_dataset import SequenceSintelDataset
-from stereo.datasets.utils import stereo_trans
+from stereo.sequence_datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 
 from cfgs.common.runtime_params import data_root_dir
@@ -11,9 +11,15 @@ from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'Sintel')
 
-clean = LazyCall(SequenceSintelDataset)(
+train_clean = LazyCall(SequenceSintelDataset)(
     data_root_path=data_root_path,
-    augmentations=None,
-    dataset_type='clean',
-    sample_len=5
+    augmentations=[LazyCall(stereo_trans.NormalizeImage)(mean=constants.standard_rgb_mean, std=constants.standard_rgb_std)],
+    dataset_type='clean'
 )
+
+val_loader = LazyCall(build_dataloader)(
+    all_dataset=[train_clean],
+    batch_size=1,
+    shuffle=False,
+    workers=8,
+    pin_memory=True)
