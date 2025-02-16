@@ -108,14 +108,14 @@ def main():
     else:
         model_trainer = Trainer(args, cfg, logger, tb_writer)
 
-    tbar = tqdm.trange(model_trainer.last_epoch + 1, cfg.runtime_params.train_epochs + 1,
+    tbar = tqdm.trange(model_trainer.last_epoch + 1, model_trainer.cfg.runtime_params.train_epochs + 1,
                        desc='epochs', dynamic_ncols=True, disable=(local_rank != 0),
                        bar_format='{l_bar}{bar}{r_bar}\n')
     # train loop
     for current_epoch in tbar:
         model_trainer.train(current_epoch, tbar)
         model_trainer.save_ckpt(current_epoch)
-        if current_epoch % cfg.runtime_params.eval_period == 0:
+        if current_epoch % model_trainer.cfg.runtime_params.eval_period == 0:
             model_trainer.evaluate(current_epoch)
 
 
