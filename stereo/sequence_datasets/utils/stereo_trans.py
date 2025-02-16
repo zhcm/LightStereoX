@@ -116,9 +116,9 @@ class RandomCrop(object):
         if crop_width > width or crop_height > height:
             return sample
 
-        n_pixels = 2 if (self.y_jitter and np.random.rand() < 0.5) else 0
-        y0 = np.random.randint(n_pixels, height - crop_height - n_pixels + 1)
-        x0 = np.random.randint(0, width - crop_width + 1)
+        n_pixels = 2 if self.y_jitter else 0
+        y0 = np.random.randint(n_pixels, height - crop_height - n_pixels)
+        x0 = np.random.randint(n_pixels, width - crop_width - n_pixels)
 
         for i in range(len(seq_img)):
             y1 = y0 + np.random.randint(-n_pixels, n_pixels + 1)

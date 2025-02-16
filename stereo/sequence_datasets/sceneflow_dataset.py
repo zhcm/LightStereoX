@@ -66,7 +66,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        print(f"Added {len(self.sample_list) - original_length} from FlyingThings {self.dataset_type}")
+        # print(f"Added {len(self.sample_list) - original_length} from FlyingThings {self.dataset_type}")
 
     def _add_monkaa(self):
         original_length = len(self.sample_list)
@@ -89,7 +89,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        print(f"Added {len(self.sample_list) - original_length} from Monkaa {self.dataset_type}")
+        # print(f"Added {len(self.sample_list) - original_length} from Monkaa {self.dataset_type}")
 
     def _add_driving(self):
         original_length = len(self.sample_list)
@@ -111,7 +111,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        print(f"Added {len(self.sample_list) - original_length} from Driving {self.dataset_type}")
+        # print(f"Added {len(self.sample_list) - original_length} from Driving {self.dataset_type}")
 
     def __getitem__(self, index):
         sample = self.sample_list[index]
@@ -133,7 +133,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
                 valid_disp = disp < 512
                 disp = np.array(disp).astype(np.float32)
 
-                output["disp"][i].append(disp)
+                output["disp"][i].append(-disp)
                 output["valid_disp"][i].append(valid_disp)
 
         if self.augmentations is not None:

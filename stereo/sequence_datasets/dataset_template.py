@@ -5,8 +5,9 @@ import torch.utils.data as torch_data
 
 
 class SequenceDatasetTemplate(torch_data.Dataset):
-    def __init__(self, augmentations):
+    def __init__(self, data_root_path, augmentations):
         super().__init__()
+        self.data_root_path = data_root_path
         self.sample_list = []
         self.augmentations = augmentations
 
