@@ -24,8 +24,8 @@ def disparity_reader(file_name):
 
 
 class SequenceSintelDataset(SequenceDatasetTemplate):
-    def __init__(self, data_root_path, dataset_type, augmentations):
-        super().__init__(data_root_path, augmentations)
+    def __init__(self, data_root_path, augmentations, logger, dataset_type):
+        super().__init__(data_root_path, augmentations, logger)
         self.dataset_type = dataset_type
 
         image_root = os.path.join(data_root_path, "training")

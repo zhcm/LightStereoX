@@ -12,8 +12,8 @@ from .dataset_template import SequenceDatasetTemplate
 
 
 class SequenceSceneFlowDataset(SequenceDatasetTemplate):
-    def __init__(self, data_root_path, dataset_type, sample_len, augmentations):
-        super().__init__(augmentations)
+    def __init__(self, data_root_path, augmentations, logger, dataset_type, sample_len):
+        super().__init__(data_root_path, augmentations, logger)
         self.data_root_path = data_root_path
         self.dataset_type = dataset_type
         self.sample_len = sample_len
@@ -66,7 +66,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        # print(f"Added {len(self.sample_list) - original_length} from FlyingThings {self.dataset_type}")
+        self.logger.info(f"Added {len(self.sample_list) - original_length} from FlyingThings {self.dataset_type}")
 
     def _add_monkaa(self):
         original_length = len(self.sample_list)
@@ -89,7 +89,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        # print(f"Added {len(self.sample_list) - original_length} from Monkaa {self.dataset_type}")
+        self.logger.info(f"Added {len(self.sample_list) - original_length} from Monkaa {self.dataset_type}")
 
     def _add_driving(self):
         original_length = len(self.sample_list)
@@ -111,7 +111,7 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
             self._append_sample(images, disparities)
 
         assert len(self.sample_list) > 0, "No samples found"
-        # print(f"Added {len(self.sample_list) - original_length} from Driving {self.dataset_type}")
+        self.logger.info(f"Added {len(self.sample_list) - original_length} from Driving {self.dataset_type}")
 
     def __getitem__(self, index):
         sample = self.sample_list[index]

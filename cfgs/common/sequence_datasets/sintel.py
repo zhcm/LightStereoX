@@ -14,6 +14,7 @@ data_root_path = os.path.join(data_root_dir, 'Sintel')
 train_clean = LazyCall(SequenceSintelDataset)(
     data_root_path=data_root_path,
     augmentations=[LazyCall(stereo_trans.NormalizeImage)(mean=constants.standard_rgb_mean, std=constants.standard_rgb_std)],
+    logger=None,
     dataset_type='clean'
 )
 
