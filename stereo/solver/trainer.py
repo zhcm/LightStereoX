@@ -31,13 +31,15 @@ class Trainer:
 
         if self.args.run_mode in ['train', 'eval']:
             # val loader
-            cfg.val_loader.is_dist = args.dist_mode
+            if 'is_dist' not in cfg.val_loader or cfg.val_loader.is_dist is None:
+                cfg.val_loader.is_dist = args.dist_mode
             self.val_set, self.val_loader, self.val_sampler = instantiate(cfg.val_loader)
             self.logger.info('Total samples for val dataset: %d' % (len(self.val_set)))
 
         if self.args.run_mode == 'train':
             # train loader
-            cfg.train_loader.is_dist = args.dist_mode
+            if 'is_dist' not in cfg.train_loader or cfg.train_loader.is_dist is None:
+                cfg.train_loader.is_dist = args.dist_mode
             self.train_set, self.train_loader, self.train_sampler = instantiate(cfg.train_loader)
             self.logger.info('Total samples for train dataset: %d' % (len(self.train_set)))
             self.logger.info('Length of train loader: %d' % (len(self.train_loader)))
