@@ -11,6 +11,12 @@ from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'CarlaSpeedbumps')
 
+trainv1 = LazyCall(SpeedBump)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/speedbump/gen_txt/train.txt',
+    augmentations=None
+)
+
 trainv2 = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
     split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSeedbumpsPitch20/train1.txt',
@@ -23,20 +29,38 @@ trainv3 = LazyCall(SpeedBump)(
     augmentations=None
 )
 
-val = LazyCall(SpeedBump)(
+valv1 = LazyCall(SpeedBump)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSpeedbumpv3/val.txt',
-    # split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSpeedbumpv3/val_bisenet.txt',
-    # split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSeedbumpsPitch20/val1.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/speedbump/gen_txt/val.txt',
     augmentations=[
         LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
         LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
     ]
 )
 
-val_loader = LazyCall(build_dataloader)(
-    all_dataset=[val],
-    batch_size=1,
-    shuffle=False,
-    workers=8,
-    pin_memory=True)
+valv2 = LazyCall(SpeedBump)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSeedbumpsPitch20/val1.txt',
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ]
+)
+
+valv3 = LazyCall(SpeedBump)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSpeedbumpv3/val.txt',
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ]
+)
+
+valv3_bisenet = LazyCall(SpeedBump)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo/StereoRBHM/CarlaSpeedbumpv3/val_bisenet.txt',
+    augmentations=[
+        LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
+        LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
+    ]
+)

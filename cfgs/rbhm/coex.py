@@ -25,21 +25,23 @@ train_augmentations = [
 ]
 
 speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
+speedbump.trainv1.augmentations = train_augmentations
+speedbump.trainv2.augmentations = train_augmentations
 speedbump.trainv3.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
-    is_dist=None,
-    all_dataset=[speedbump.trainv3],
+    is_dist=True,
+    all_dataset=[speedbump.trainv1],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
     pin_memory=True)
 
 val_loader = LazyCall(build_dataloader)(
-    is_dist=None,
-    all_dataset=[speedbump.val],
+    is_dist=True,
+    all_dataset=[speedbump.valv1],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -49,7 +51,7 @@ val_loader = LazyCall(build_dataloader)(
 model = LazyCall(CoEx)()
 
 # optim
-lr = 0.0001 * batch_size_per_gpu
+lr = 0.0001 * batch_size_per_gpu / 2
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -67,4 +69,4 @@ runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBumpD
 runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/CoExNet_Sceneflow_Amp.pt')
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/coex_sceneflow_amp.pt')
