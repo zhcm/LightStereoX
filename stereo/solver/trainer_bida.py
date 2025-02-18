@@ -4,7 +4,7 @@ import time
 import torch
 
 from stereo.modeling.models.bidastereo.eval_utils import eval_batch, aggregate_eval_results
-from collections import defaultdict
+from tabulate import tabulate
 from .trainer import Trainer
 
 
@@ -25,27 +25,27 @@ class BIDATrainer(Trainer):
             for k, v in data.items():
                 data[k] = v.to(self.local_rank) if torch.is_tensor(v) else v
 
-            batch_dict = defaultdict(list)
-            batch_dict["stereo_video"] = data["img"][0]
-            batch_dict["disparity"] = data["disp"][0][:, 0].abs()
-            batch_dict["disparity_mask"] = data["valid_disp"][0][:, :1]
+            batch_dict = {
+                "stereo_video": data["img"][0],  # [num_frames, 2(l&r), 3(c), h, w]
+                "disparity": data["disp"][0][:, 0].abs(),  # 取左图disp [num_frames, 1(c), h, w]
+                "disparity_mask": data["valid_disp"][0][:, 0].unsqueeze(1),  # 取左图valid_disp [num_frames, 1, h, w]
+                "fg_mask": data["valid_disp"][0][:, 0].unsqueeze(1)
+            }
             if "mask" in data:
-                batch_dict["fg_mask"] = data["mask"][0][:, :1]
-            else:
-                batch_dict["fg_mask"] = torch.ones_like(batch_dict["disparity_mask"])
+                batch_dict["fg_mask"] = data["mask"][0][:, 0].unsqueeze(1)
 
             with torch.cuda.amp.autocast(enabled=self.cfg.runtime_params.mixed_precision):
                 infer_start = time.time()
-                predictions = self.model(data)
+                predictions = self.model(data)  # [num_frames, bz, channel, h, w]
                 infer_time = time.time() - infer_start
 
             if 'pad' in data:
-                pad = data['pad'].squeeze()
+                pad = data['pad'][0]
                 pad_top, pad_right, pad_bottom, pad_left = pad[0], pad[1], pad[2], pad[3]
                 ht, wd = predictions.shape[-2:]
                 predictions = predictions[..., pad_top: ht-pad_bottom, pad_left: wd-pad_right]
 
-            predictions = predictions.squeeze(1).abs()[:, :1]
+            predictions = predictions[:, 0].abs()
             predictions = predictions * batch_dict["disparity_mask"].round()
 
             batch_eval_result, seq_length = eval_batch(batch_dict, {'disparity': predictions})
@@ -57,5 +57,7 @@ class BIDATrainer(Trainer):
                 self.logger.info(message)
 
         results = aggregate_eval_results(evaluate_result)
-        print(results)
-        # self.logger.info(f"Epoch {current_epoch} metrics: {results}")
+        metrics = sorted(list(results.keys()), key=lambda x: x.metric)
+
+        self.logger.info(f"Epoch {current_epoch} metrics: ")
+        self.logger.info(tabulate([[metric, results[metric]] for metric in metrics]))
