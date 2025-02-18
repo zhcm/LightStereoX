@@ -24,10 +24,11 @@ class SequenceDatasetTemplate(torch_data.Dataset):
             res['pad'] = pad_value
 
         for k, v in output.items():
-            for i in range(len(v)):
-                if len(v[i]) > 0:
-                    v[i] = np.stack(v[i])  # each frame stack
-            if len(v) > 0 and (len(v[0]) > 0):
-                res[k] = np.stack(v)  # sequence stack
+            if k != "viewpoint" and k != "metadata":
+                for i in range(len(v)):
+                    if len(v[i]) > 0:
+                        v[i] = np.stack(v[i])  # each frame stack
+                if len(v) > 0 and (len(v[0]) > 0):
+                    res[k] = np.stack(v)  # sequence stack
 
         return res

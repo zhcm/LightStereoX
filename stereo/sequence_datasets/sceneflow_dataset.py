@@ -142,9 +142,10 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
 
         for i in range(sample_size):
             for cam in (0, 1):
-                valid_disp = (np.abs(output["disp"][i][cam]) < 512) & (output["disp"][i][cam] != 0)
+                disp = output["disp"][i][cam][..., 0]
+                valid_disp = (np.abs(disp) < 512) & (disp != 0)
                 output["valid_disp"][i][cam] = valid_disp.astype(np.float32)
-                output["disp"][i][cam] = np.expand_dims(output["disp"][i][cam], axis=0)
+                output["disp"][i][cam] = np.expand_dims(disp, axis=0)
 
         res = self.format_output(output)
         return res
