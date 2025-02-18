@@ -11,16 +11,17 @@ from cfgs.common.constants import constants
 
 data_root_path = os.path.join(data_root_dir, 'Sintel')
 
-train_clean = LazyCall(SequenceSintelDataset)(
+train_final = LazyCall(SequenceSintelDataset)(
     data_root_path=data_root_path,
     augmentations=[LazyCall(stereo_trans.NormalizeImage)(mean=constants.standard_rgb_mean, std=constants.standard_rgb_std)],
     logger=None,
-    dataset_type='clean'
+    dataset_type='final'
 )
 
 val_loader = LazyCall(build_dataloader)(
-    all_dataset=[train_clean],
+    is_dist=False,
+    all_dataset=[train_final],
     batch_size=1,
     shuffle=False,
-    workers=8,
+    workers=0,
     pin_memory=True)
