@@ -129,12 +129,12 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
                 img = img[..., :3]
                 output["img"][i].append(img)
 
-                disp = readpfm(sample["disparity"][cam][i])[0].astype(np.float32)
+                disp = readpfm(sample["disparity"][cam][i])[0].astype(np.float32)  # [h, w]
                 valid_disp = disp < 512
                 disp = np.array(disp).astype(np.float32)
-
-                output["disp"][i].append(-disp)
-                output["valid_disp"][i].append(valid_disp)
+                disp = np.stack([-disp, np.zeros_like(disp)], axis=-1)  # [h, w, 2]
+                output["disp"][i].append(disp)
+                output["valid_disp"][i].append(valid_disp)  # [h, w] bool
 
         if self.augmentations is not None:
             for t in self.augmentations:
@@ -146,12 +146,5 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
                 output["valid_disp"][i][cam] = valid_disp.astype(np.float32)
                 output["disp"][i][cam] = np.expand_dims(output["disp"][i][cam], axis=0)
 
-        res = {}
-        for k, v in output.items():
-            for i in range(len(v)):
-                if len(v[i]) > 0:
-                    v[i] = np.stack(v[i])
-            if len(v) > 0 and (len(v[0]) > 0):
-                res[k] = np.stack(v)
-
+        res = self.format_output(output)
         return res

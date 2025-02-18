@@ -95,7 +95,8 @@ class RandomScale(object):
                     seq_img[i][cam] = cv2.resize(seq_img[i][cam], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
                     if len(seq_disp[i]) > 0:
                         seq_disp[i][cam] = cv2.resize(seq_disp[i][cam], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
-                        seq_disp[i][cam] = seq_disp[i][cam] * scale_x
+                        seq_disp[i][cam] = seq_disp[i][cam] * [scale_x, scale_y]
+                        seq_disp[i][cam] = seq_disp[i][cam][..., 0].astype(np.float32)
 
         sample['img'] = seq_img
         sample['disp'] = seq_disp
