@@ -148,3 +148,43 @@ class NormalizeImage(object):
 
         sample['img'] = seq_img
         return sample
+
+
+class DivisiblePad(object):
+    def __init__(self, divisor, mode='tr'):
+        self.divisor = divisor
+        self.mode = mode
+
+    def __call__(self, sample):
+        seq_img = sample['img']
+        h, w = seq_img[0][0].shape[:2]
+        if h % self.divisor != 0:
+            pad_h = self.divisor - h % self.divisor
+        else:
+            pad_h = 0
+        if w % self.divisor != 0:
+            pad_w = self.divisor - w % self.divisor
+        else:
+            pad_w = 0
+
+        if self.mode == 'round':
+            pad_top = pad_h // 2
+            pad_right = pad_w // 2
+            pad_bottom = pad_h - (pad_h // 2)
+            pad_left = pad_w - (pad_w // 2)
+        elif self.mode == 'tr':
+            pad_top = pad_h
+            pad_right = pad_w
+            pad_bottom = 0
+            pad_left = 0
+        else:
+            raise Exception('no DivisiblePad mode')
+
+        for i in range(len(seq_img)):
+            for cam in (0, 1):
+                pad_width = np.array([[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]])
+                seq_img[i][cam] = np.pad(seq_img[i][cam], pad_width, 'edge')
+
+        sample['pad'] = np.array([pad_top, pad_right, pad_bottom, pad_left])
+        sample['img'] = seq_img
+        return sample
