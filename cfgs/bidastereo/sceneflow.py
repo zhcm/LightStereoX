@@ -36,6 +36,9 @@ data = LazyConfig.load('cfgs/common/sequence_datasets/sceneflow.py')
 data.train_clean.augmentations = augmentations['train']
 data.train_final.augmentations = augmentations['train']
 
+val_data = LazyConfig.load('cfgs/common/sequence_datasets/sintel_clean.py')
+val_data.train_clean.augmentations = augmentations['val']
+
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
@@ -49,7 +52,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_clean],
+    all_dataset=[val_data.train_clean],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=16,
