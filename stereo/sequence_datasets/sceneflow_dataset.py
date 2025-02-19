@@ -148,4 +148,9 @@ class SequenceSceneFlowDataset(SequenceDatasetTemplate):
                 output["disp"][i][cam] = np.expand_dims(disp, axis=0)
 
         res = self.format_output(output)
+        # {
+        #     'img': [num_frames, 2(l&r), 3(c), h, w],
+        #     'disp': [num_frames, 2(l&r), 1(c), h, w],
+        #     'valid_disp': [num_frames, 2(l&r), h, w],
+        #  }
         return res

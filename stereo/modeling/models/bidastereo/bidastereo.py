@@ -8,20 +8,19 @@ from collections import defaultdict
 import importlib
 import sys
 
-from bidastereo.models.core.update import (
-    MultiSequenceUpdateBlock3D,
-)
-from bidastereo.models.core.extractor import BasicEncoder, ResidualBlock
-from bidastereo.models.core.corr import TFCL
+from .update import MultiSequenceUpdateBlock3D
+from .extractor import BasicEncoder, ResidualBlock
+from .corr import TFCL
 
-from bidastereo.models.core.utils.utils import InputPadder, interp
-from bidastereo.models.raft_model import RAFTModel
+from .utils import InputPadder, interp
+from .raft_model import RAFTModel
+from .losses import sequence_loss
 
 autocast = torch.cuda.amp.autocast
 
 
 class BiDAStereo(nn.Module):
-    def __init__(self, mixed_precision = False):
+    def __init__(self, train_iters, eval_iters, mixed_precision=False):
         super(BiDAStereo, self).__init__()
 
         self.mixed_precision = mixed_precision
@@ -35,6 +34,9 @@ class BiDAStereo(nn.Module):
         # feature network and update block
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=self.dropout)
         self.update_block = MultiSequenceUpdateBlock3D(hidden_dim=self.hidden_dim, cor_planes=3*9, mask_size=4)
+
+        self.train_iters = train_iters
+        self.eval_iters = eval_iters
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -175,7 +177,10 @@ class BiDAStereo(nn.Module):
             align_corners=True)
         return output
 
-    def forward(self, seq1, seq2, flow_init=None, iters=10, test_mode=False):
+    def forward(self, data, flow_init=None):
+        seq1 = data["img"][:, :, 0]
+        seq2 = data["img"][:, :, 1]
+        iters = self.train_iters if self.training else self.eval_iters
         b, T, *_ = seq1.shape
 
         # compute optical flow
@@ -340,7 +345,18 @@ class BiDAStereo(nn.Module):
         predictions = rearrange(predictions, "d (b t) c h w -> d t b c h w", b=b, t=T)
         flow_up = predictions[-1]
 
-        if test_mode:
-            return flow_up
+        if not self.training:
+            return flow_up  # [5, 2, 1, 256, 256]
 
         return predictions
+
+    @staticmethod
+    def get_loss(model_pred, data):
+        num_traj = len(data["disp"][0])
+        loss = 0
+        for i in range(num_traj):
+            seq_loss, metrics = sequence_loss(model_pred[:, i], data["disp"][:, i, 0], data["valid_disp"][:, i, 0])
+            loss += seq_loss / num_traj
+
+        loss_info = {'scalar/train/loss_disp': loss.item()}
+        return loss, loss_info

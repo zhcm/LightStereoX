@@ -59,10 +59,10 @@ val_loader = LazyCall(build_dataloader)(
     pin_memory=True,
     drop_last=False)
 
-model = LazyCall(BiDAStereo)(train_iters=10, valid_iters=20)
+model = LazyCall(BiDAStereo)(train_iters=10, eval_iters=20)
 
 # optim
-lr = 0.0004
+lr = 0.0004 * batch_size_per_gpu / 2
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -76,6 +76,8 @@ runtime_params.max_iter = 80000
 runtime_params.finetune_step = 39999
 runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
+runtime_params.freeze_bn = True
+# runtime_params.pretrained_model = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/misc/bidastereo_sf_dr.pt'
 
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=runtime_params.max_iter+100, pct_start=0.01,

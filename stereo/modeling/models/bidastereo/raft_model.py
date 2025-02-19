@@ -15,7 +15,7 @@ import sys
 
 sys.path.append("third_party/RAFT")
 raft = importlib.import_module(
-    "bidastereo.third_party.RAFT.core.raft"
+    "third_party.RAFT.core.raft"
 )
 
 
