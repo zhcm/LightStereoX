@@ -67,7 +67,8 @@ def main():
     if args.dist_mode:
         dist.broadcast(timestamp_tensor, src=0)
     shared_time = datetime.datetime.fromtimestamp(timestamp_tensor.item()).strftime('%Y%m%d-%H%M%S')
-    log_file = os.path.join(output_dir, 'eval_{}_{}.log'.format(Path(args.eval_data_cfg_file).stem, shared_time))
+    logfile_middle_name = Path(args.eval_data_cfg_file).stem if args.eval_data_cfg_file else 'default'
+    log_file = os.path.join(output_dir, 'eval_{}_{}.log'.format(logfile_middle_name, shared_time))
     if global_rank == 0:
         open(log_file, "w").close()
     if args.dist_mode:
