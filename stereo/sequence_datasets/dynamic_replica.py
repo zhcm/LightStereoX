@@ -161,7 +161,7 @@ class DynamicReplicaDataset(SequenceDatasetTemplate):
                 valid_disp = (np.abs(disp) < 512) & (disp != 0)
                 output["valid_disp"][i][cam] = valid_disp.astype(np.float32)
                 output["disp"][i][cam] = np.expand_dims(disp, axis=0)
-                if "mask" in output:
+                if "mask" in output and cam < len(output["mask"][i]):
                     output["mask"][i][cam] = output["mask"][i][cam].astype(np.float32)
 
         res = self.format_output(output)
