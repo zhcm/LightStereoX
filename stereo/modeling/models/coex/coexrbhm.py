@@ -11,7 +11,7 @@ from .rbhm import Refinement
 
 
 class CoExHeight(nn.Module):
-    def __init__(self):
+    def __init__(self, rbhm_pretrained=''):
         super().__init__()
         self.max_disp = 192
         spixel_branch_channels = [32, 48]
@@ -37,7 +37,7 @@ class CoExHeight(nn.Module):
         self.DispProcessor = CoExDispProcessor(max_disp=self.max_disp, regression_topk=regression_topk, chans=chans)
 
         self.height_head = Refinement(in_channels=4)
-        pretrained_state_dict = torch.load('/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX/output/SpeedBumpDataset/RBHM/bumpmask_v3dataset_retrain/ckpt/epoch_60/pytorch_model.bin', map_location='cpu')
+        pretrained_state_dict = torch.load(rbhm_pretrained, map_location='cpu')
         state_dict = {}
         for key, val in pretrained_state_dict.items():
             state_dict[key.replace('height_head.', '')] = val

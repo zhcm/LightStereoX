@@ -43,7 +43,11 @@ val_loader = LazyCall(build_dataloader)(
     pin_memory=True)
 
 # model
-model = LazyCall(CoExHeight)()
+model = LazyCall(CoExHeight)(
+    rbhm_pretrained=os.path.join(
+        ckpt_root_dir,
+        'output/SpeedBumpDataset/RBHM/bumpmask_v3dataset_retrain/ckpt/epoch_60/pytorch_model.bin'
+    ))
 
 # optim
 lr = 0.0001 * batch_size_per_gpu
