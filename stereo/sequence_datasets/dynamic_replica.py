@@ -38,59 +38,63 @@ class DynamicReplicaDataset(SequenceDatasetTemplate):
             seq_annot[frame_annot.sequence_name][frame_annot.camera_name].append(frame_annot)
 
         for seq_name in seq_annot.keys():
-            filenames = defaultdict(lambda: defaultdict(list))
-            for cam in ["left", "right"]:
-                for framedata in seq_annot[seq_name][cam]:
-                    im_path = os.path.join(data_root_path, split, framedata.image.path)
-                    depth_path = os.path.join(data_root_path, split, framedata.depth.path)
-                    mask_path = os.path.join(data_root_path, split, framedata.mask.path)
+            try:
+                filenames = defaultdict(lambda: defaultdict(list))
+                for cam in ["left", "right"]:
+                    for framedata in seq_annot[seq_name][cam]:
+                        im_path = os.path.join(data_root_path, split, framedata.image.path)
+                        depth_path = os.path.join(data_root_path, split, framedata.depth.path)
+                        mask_path = os.path.join(data_root_path, split, framedata.mask.path)
 
-                    assert os.path.isfile(im_path), im_path
-                    if self.split == 'train':
-                        assert os.path.isfile(depth_path), depth_path
-                    assert os.path.isfile(mask_path), mask_path
+                        assert os.path.isfile(im_path), im_path
+                        if self.split == 'train':
+                            assert os.path.isfile(depth_path), depth_path
+                        assert os.path.isfile(mask_path), mask_path
 
-                    filenames["image"][cam].append(im_path)
-                    if os.path.isfile(depth_path):
-                        filenames["depth"][cam].append(depth_path)
-                    filenames["mask"][cam].append(mask_path)
+                        filenames["image"][cam].append(im_path)
+                        if os.path.isfile(depth_path):
+                            filenames["depth"][cam].append(depth_path)
+                        filenames["mask"][cam].append(mask_path)
 
-                    filenames["viewpoint"][cam].append(framedata.viewpoint)
-                    filenames["metadata"][cam].append([framedata.sequence_name, framedata.image.size])
+                        filenames["viewpoint"][cam].append(framedata.viewpoint)
+                        filenames["metadata"][cam].append([framedata.sequence_name, framedata.image.size])
 
-                    for k in filenames.keys():
-                        assert (len(filenames[k][cam]) == len(filenames["image"][cam]) > 0), framedata.sequence_name
+                        for k in filenames.keys():
+                            assert (len(filenames[k][cam]) == len(filenames["image"][cam]) > 0), framedata.sequence_name
 
-            seq_len = len(filenames["image"][cam])
-            print("seq_len", seq_name, seq_len)
+                seq_len = len(filenames["image"][cam])
+                self.logger.info("seq_len", seq_name, seq_len)
 
-            if split == "train":
-                for ref_idx in range(0, seq_len, 3):
-                    step = 1 if self.sample_len == 1 else np.random.randint(1, 6)  # 序列采样的步长
-                    if ref_idx + step * self.sample_len < seq_len:
+                if split == "train":
+                    for ref_idx in range(0, seq_len, 3):
+                        step = 1 if self.sample_len == 1 else np.random.randint(1, 6)  # 序列采样的步长
+                        if ref_idx + step * self.sample_len < seq_len:
+                            sample = defaultdict(lambda: defaultdict(list))
+                            for cam in ["left", "right"]:
+                                for idx in range(ref_idx, ref_idx + step * self.sample_len, step):
+                                    for k in filenames.keys():
+                                        if "mask" not in k:
+                                            sample[k][cam].append(filenames[k][cam][idx])
+                            self.sample_list.append(sample)
+                else:
+                    step = self.sample_len if self.sample_len > 0 else seq_len
+                    counter = 0
+                    for ref_idx in range(0, seq_len, step):
                         sample = defaultdict(lambda: defaultdict(list))
                         for cam in ["left", "right"]:
-                            for idx in range(ref_idx, ref_idx + step * self.sample_len, step):
+                            for idx in range(ref_idx, ref_idx + step):
                                 for k in filenames.keys():
-                                    if "mask" not in k:
-                                        sample[k][cam].append(filenames[k][cam][idx])
+                                    sample[k][cam].append(filenames[k][cam][idx])
                         self.sample_list.append(sample)
-            else:
-                step = self.sample_len if self.sample_len > 0 else seq_len
-                counter = 0
-                for ref_idx in range(0, seq_len, step):
-                    sample = defaultdict(lambda: defaultdict(list))
-                    for cam in ["left", "right"]:
-                        for idx in range(ref_idx, ref_idx + step):
-                            for k in filenames.keys():
-                                sample[k][cam].append(filenames[k][cam][idx])
-                    self.sample_list.append(sample)
-                    counter += 1
-                    if 0 < only_first_n_samples <= counter:
-                        break
+                        counter += 1
+                        if 0 < only_first_n_samples <= counter:
+                            break
+            except Exception as e:
+                self.logger.error(e)
+                self.logger.info("Skipping sequence", seq_name)
 
         assert len(self.sample_list) > 0, "No samples found"
-        print(f"Added {len(self.sample_list)} from Dynamic Replica {split}")
+        self.logger.info(f"Added {len(self.sample_list)} from Dynamic Replica {split}")
 
     def __getitem__(self, index):
         sample = self.sample_list[index]  # train没有mask，val有mask
