@@ -21,17 +21,11 @@ train_bdd = LazyCall(MonoDataset)(
     augmentations=None,
 )  # 100000 99717
 
-# train_bdd_realfill = LazyCall(RealfillDataset)(
-#     data_root_path=data_root_path,
-#     split_file='/mnt/nas/algorithm/chenming.zhang/misc/realfill.txt',
-#     augmentations=None,
-# )  # 100000
-#
-# train_bdd_crop = LazyCall(MonoDataset)(
-#     data_root_path=data_root_path,
-#     split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/bdd100k/crop.txt',
-#     augmentations=None,
-# )  # 100000
+train_bdd_realfill = LazyCall(RealfillDataset)(
+    data_root_path=data_root_path,
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/bdd100K_realfill.txt',
+    augmentations=None,
+)  # 100000
 
 train_21k = LazyCall(MonoDataset)(
     data_root_path=data_root_path,

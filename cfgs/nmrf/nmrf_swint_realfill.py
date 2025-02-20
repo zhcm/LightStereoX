@@ -13,7 +13,7 @@ from stereo.modeling.models.nmrf.NMRF import NMRF, Criterion
 from stereo.modeling.models.nmrf.build_optimizer import build_optimizer, for_compatibility
 from stereo.solver.build import ClipGradNorm
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
 train_augmentations = [
@@ -86,7 +86,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005 * batch_size_per_gpu / 2 * 2
+lr = 0.0005 * batch_size_per_gpu / 2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -95,7 +95,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MonoDataset/NMRF')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MonoDataset/NMRF')
 runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
