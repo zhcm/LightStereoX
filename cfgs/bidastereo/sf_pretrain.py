@@ -76,6 +76,7 @@ runtime_params.max_iter = 60000
 runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
 runtime_params.freeze_bn = True
+runtime_params.bida_ksize = 20
 
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=runtime_params.max_iter+100, pct_start=0.01,

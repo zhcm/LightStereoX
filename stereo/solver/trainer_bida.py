@@ -39,7 +39,7 @@ class BIDATrainer(Trainer):
             disp_preds = []
             video = batch_dict["stereo_video"]
             num_ims = len(video)
-            kernel_size = self.args.bida_ksize
+            kernel_size = self.cfg.runtime_params.bida_ksize
             if kernel_size >= num_ims:
                 with torch.cuda.amp.autocast(enabled=self.cfg.runtime_params.mixed_precision):
                     infer_start = time.time()

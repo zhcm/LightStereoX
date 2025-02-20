@@ -25,7 +25,6 @@ def parse_config():
     parser.add_argument('--eval_data_cfg_file', type=str, default=None)
     parser.add_argument('--eval_batch_size', type=int, default=1)
     parser.add_argument('--pretrained_model', type=str, default=None, required=True, help='pretrained_model')
-    parser.add_argument('--bida_ksize', type=int, default=20)
 
     args = parser.parse_args()
     cfg = LazyConfig.load(args.cfg_file)
