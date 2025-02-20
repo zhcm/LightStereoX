@@ -13,7 +13,7 @@ from stereo.modeling.models.bidastereo.get_params import get_model_params
 from stereo.solver.build import ClipGradNorm
 from stereo.solver.trainer_bida import BIDATrainer
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, save_root_dir
 from cfgs.common.constants import constants
 
 augmentations = {
@@ -32,9 +32,15 @@ augmentations = {
     ]
 }
 
-data = LazyConfig.load('cfgs/common/sequence_datasets/sceneflow.py')
-data.train_clean.augmentations = augmentations['train']
-data.train_final.augmentations = augmentations['train']
+sceneflow = LazyConfig.load('cfgs/common/sequence_datasets/sceneflow.py')
+sceneflow.train_clean.augmentations = augmentations['train']
+sceneflow.train_clean.sample_len = 5
+sceneflow.train_final.augmentations = augmentations['train']
+sceneflow.train_final.sample_len = 5
+
+dynamic = LazyConfig.load('cfgs/common/sequence_datasets/dynamic_replica.py')
+dynamic.train.augmentations = augmentations['train']
+dynamic.train.sample_len = 5
 
 val_data = LazyConfig.load('cfgs/common/sequence_datasets/sintel_clean.py')
 val_data.train_clean.augmentations = augmentations['val']
@@ -43,7 +49,7 @@ val_data.train_clean.augmentations = augmentations['val']
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_clean, data.train_final],
+    all_dataset=[sceneflow.train_clean, sceneflow.train_final, dynamic.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=0,
@@ -62,7 +68,7 @@ val_loader = LazyCall(build_dataloader)(
 model = LazyCall(BiDAStereo)(train_iters=10, eval_iters=20)
 
 # optim
-lr = 0.0004 * batch_size_per_gpu / 2
+lr = 0.0004
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -71,13 +77,11 @@ optimizer = LazyCall(AdamW)(
 
 trainer = LazyCall(BIDATrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
+runtime_params.save_root_dir = os.path.join(save_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
 runtime_params.max_iter = 80000
-runtime_params.finetune_step = 39999
 runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
 runtime_params.freeze_bn = True
-# runtime_params.pretrained_model = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/misc/bidastereo_sf_dr.pt'
 
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=runtime_params.max_iter+100, pct_start=0.01,

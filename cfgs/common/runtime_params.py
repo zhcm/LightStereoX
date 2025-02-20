@@ -30,4 +30,5 @@ runtime_params = OmegaConf.create(
 # data_root_dir = '/mnt/nas/algorithm/chenming.zhang/dataset/'
 project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
 data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
+save_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
 
