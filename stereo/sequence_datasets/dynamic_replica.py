@@ -63,7 +63,7 @@ class DynamicReplicaDataset(SequenceDatasetTemplate):
                             assert (len(filenames[k][cam]) == len(filenames["image"][cam]) > 0), framedata.sequence_name
 
                 seq_len = len(filenames["image"][cam])
-                self.logger.info("seq_len", seq_name, seq_len)
+                self.logger.info("seq_len {} {}".format(seq_name, seq_len))
 
                 if split == "train":
                     for ref_idx in range(0, seq_len, 3):
@@ -91,7 +91,7 @@ class DynamicReplicaDataset(SequenceDatasetTemplate):
                             break
             except Exception as e:
                 self.logger.error(e)
-                self.logger.info("Skipping sequence", seq_name)
+                self.logger.info("Skipping sequence {}".format(seq_name))
 
         assert len(self.sample_list) > 0, "No samples found"
         self.logger.info(f"Added {len(self.sample_list)} from Dynamic Replica {split}")

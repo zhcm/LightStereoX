@@ -13,7 +13,7 @@ from stereo.modeling.models.bidastereo.get_params import get_model_params
 from stereo.solver.build import ClipGradNorm
 from stereo.solver.trainer_bida import BIDATrainer
 
-from cfgs.common.runtime_params import runtime_params, save_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
 augmentations = {
@@ -71,7 +71,7 @@ optimizer = LazyCall(AdamW)(
 
 trainer = LazyCall(BIDATrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
-runtime_params.save_root_dir = os.path.join(save_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
 runtime_params.max_iter = 60000
 runtime_params.eval_period = 100
 runtime_params.find_unused_parameters = True
