@@ -3,10 +3,12 @@
 import os
 import argparse
 import datetime
+import yaml
 import torch
 import torch.distributed as dist
 
 from pathlib import Path
+from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
 from stereo.config.instantiate import instantiate
@@ -25,6 +27,7 @@ def parse_config():
     parser.add_argument('--eval_data_cfg_file', type=str, default=None)
     parser.add_argument('--eval_batch_size', type=int, default=1)
     parser.add_argument('--pretrained_model', type=str, default=None, required=True, help='pretrained_model')
+    parser.add_argument('--update', action='append', nargs=2, metavar=('KEY', 'VALUE'), help="Update a specific key in the configuration. Format: --update key value")
 
     args = parser.parse_args()
     cfg = LazyConfig.load(args.cfg_file)
@@ -34,6 +37,10 @@ def parse_config():
     if args.eval_data_cfg_file:
         cfg.val_loader = LazyConfig.load(args.eval_data_cfg_file).val_loader
         cfg.val_loader.batch_size = args.eval_batch_size
+
+    if args.update:
+        for key, value in args.update:
+            OmegaConf.update(cfg, key, yaml.safe_load(value), merge=True)
 
     args.run_mode = 'eval'
     return args, cfg

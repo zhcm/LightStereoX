@@ -75,8 +75,8 @@ class BIDATrainer(Trainer):
             predictions = predictions * batch_dict["disparity_mask"].round()
 
             batch_eval_result, seq_length = eval_batch(batch_dict, {'disparity': predictions})
-            metrics = sorted(list(batch_eval_result.keys()), key=lambda x: x.metric)
-            self.logger.info(tabulate([[metric, batch_eval_result[metric]] for metric in metrics]))
+            # metrics = sorted(list(batch_eval_result.keys()), key=lambda x: x.metric)
+            # self.logger.info(tabulate([[metric, batch_eval_result[metric]] for metric in metrics]))
             evaluate_result.append((batch_eval_result, seq_length))
 
             if i % self.cfg.runtime_params.log_period == 0:
