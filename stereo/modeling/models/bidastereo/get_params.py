@@ -6,3 +6,7 @@ def get_model_params(model):
         if any([key in name for key in ['raft']]):
             param.requires_grad_(False)
     return model.parameters()
+
+
+def get_all_model_params(model):
+    return model.parameters()
