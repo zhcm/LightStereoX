@@ -52,7 +52,7 @@ train_loader = LazyCall(build_dataloader)(
     all_dataset=[sceneflow.train_clean, sceneflow.train_final, dynamic.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
-    workers=0,
+    workers=16,
     pin_memory=True,
     drop_last=True)
 

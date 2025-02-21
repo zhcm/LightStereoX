@@ -46,7 +46,7 @@ train_loader = LazyCall(build_dataloader)(
     all_dataset=[data.train_clean, data.train_final],
     batch_size=batch_size_per_gpu,
     shuffle=True,
-    workers=0,
+    workers=16,
     pin_memory=True,
     drop_last=True)
 

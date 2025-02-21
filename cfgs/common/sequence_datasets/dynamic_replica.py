@@ -32,5 +32,5 @@ val_loader = LazyCall(build_dataloader)(
     all_dataset=[val],
     batch_size=1,
     shuffle=False,
-    workers=0,
+    workers=8,
     pin_memory=True)
