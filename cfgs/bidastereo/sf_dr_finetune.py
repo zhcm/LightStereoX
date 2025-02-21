@@ -8,7 +8,7 @@ from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.sequence_datasets.utils import stereo_trans
 from stereo.datasets import build_dataloader
 from stereo.modeling.models.bidastereo.bidastereo import BiDAStereo
-from stereo.modeling.models.bidastereo.get_params import get_model_params
+from stereo.modeling.models.bidastereo.get_params import get_all_model_params
 
 from stereo.solver.build import ClipGradNorm
 from stereo.solver.trainer_bida import BIDATrainer
@@ -70,7 +70,7 @@ model = LazyCall(BiDAStereo)(train_iters=10, eval_iters=20)
 # optim
 lr = 0.0004
 optimizer = LazyCall(AdamW)(
-    params=LazyCall(get_model_params)(model=None),
+    params=LazyCall(get_all_model_params)(model=None),
     lr=lr,
     weight_decay=1.0e-05,
     eps=1.0e-08)
