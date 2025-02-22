@@ -77,6 +77,9 @@ optimizer = LazyCall(AdamW)(
 
 trainer = LazyCall(BIDATrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
+# (22390 + 17088 + 8720) * 2 + 46118 = 142514
+# 142514 / 16 = 8907
+# 80000 / 8907 = 9
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
 runtime_params.max_iter = 80000
 runtime_params.eval_period = 100
