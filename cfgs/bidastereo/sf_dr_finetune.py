@@ -46,7 +46,7 @@ val_data = LazyConfig.load('cfgs/common/sequence_datasets/sintel_clean.py')
 val_data.train_clean.augmentations = augmentations['val']
 
 # dataloader
-batch_size_per_gpu = 2
+batch_size_per_gpu = 1
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.train_clean, sceneflow.train_final, dynamic.train],
@@ -78,14 +78,14 @@ optimizer = LazyCall(AdamW)(
 trainer = LazyCall(BIDATrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
 # (22390 + 17088 + 8720) * 2 + 45402 = 141798
-# 141798 / 16 = 8863
-# 60000 / 8863 = 7
+# 141798 / 8 = 17725
+# 60000 / 17725 = 4
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
 runtime_params.max_iter = 60000
 runtime_params.eval_period = 100
-runtime_params.find_unused_parameters = True
+runtime_params.find_unused_parameters = False
 runtime_params.freeze_bn = True
-runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo/sf_dr_pretrain/ckpt/epoch_9/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo/sf_dr_pretrain/ckpt/epoch_10/pytorch_model.bin')
 
 # scheduler
 scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=runtime_params.max_iter+100, pct_start=0.01,

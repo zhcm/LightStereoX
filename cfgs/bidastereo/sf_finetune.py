@@ -40,7 +40,7 @@ val_data = LazyConfig.load('cfgs/common/sequence_datasets/sintel_clean.py')
 val_data.train_clean.augmentations = augmentations['val']
 
 # dataloader
-batch_size_per_gpu = 2
+batch_size_per_gpu = 1
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[data.train_clean, data.train_final],
@@ -72,12 +72,12 @@ optimizer = LazyCall(AdamW)(
 trainer = LazyCall(BIDATrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
 # (22390 + 17088 + 8720) * 2 = 96396
-# 96396 / 16 = 6025
-# 40000 / 6025 = 7
+# 96396 / 8 = 12050
+# 40000 / 12050 = 4
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo')
 runtime_params.max_iter = 40000
 runtime_params.eval_period = 100
-runtime_params.find_unused_parameters = True
+runtime_params.find_unused_parameters = False
 runtime_params.freeze_bn = True
 runtime_params.bida_ksize = 20
 runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SequenceSceneFlowDataset/BiDAStereo/sf_pretrain/ckpt/epoch_10/pytorch_model.bin')
