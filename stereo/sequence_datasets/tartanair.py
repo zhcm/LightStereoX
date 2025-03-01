@@ -1,4 +1,4 @@
-# @Time    : 2025/2/27 18:05
+# @Time    : 2025/2/27 18:07
 # @Author  : zhangchenming
 import os
 import re
@@ -9,19 +9,14 @@ from collections import defaultdict
 from .dataset_template import SequenceDatasetTemplate
 
 
-class FallingThings(SequenceDatasetTemplate):
+class TartanAir(SequenceDatasetTemplate):
     def __init__(self, data_root_path, augmentations, logger, sample_len):
         super().__init__(data_root_path, augmentations, logger)
         self.sample_len = sample_len
 
-        mixed_seqs = sorted(glob(os.path.join(data_root_path, 'fat/mixed/*')))
-        for each_seqs in mixed_seqs:
-            left_images = sorted(glob(os.path.join(each_seqs, '*.left.jpg')))
-            self._append_sample(left_images)
-
-        single_seqs = sorted(glob(os.path.join(data_root_path, 'fat/single/*/*')))
-        for each_seqs in single_seqs:
-            left_images = sorted(glob(os.path.join(each_seqs, '*.left.jpg')))
+        all_seqs = sorted(glob(os.path.join(data_root_path, '*/*/*')))
+        for each_seqs in all_seqs:
+            left_images = sorted(glob(os.path.join(each_seqs, 'image_left/*_left.png')))
             self._append_sample(left_images)
 
     def _append_sample(self, left_images):
@@ -34,9 +29,9 @@ class FallingThings(SequenceDatasetTemplate):
 
             for idx in range(ref_idx, ref_idx + self.sample_len):
                 sample["image"]['left'].append(left_images[idx])
-                sample["image"]['right'].append(left_images[idx].replace('left', 'right'))
-                sample["disparity"]['left'].append(left_images[idx].replace('left.jpg', 'left.depth.png'))
-                sample["disparity"]['right'].append(left_images[idx].replace('left.jpg', 'right.depth.png'))
+                sample["image"]['right'].append(left_images[idx].replace('image_left', 'image_right').replace('_left.png', '_right.png'))
+                sample["disparity"]['left'].append(left_images[idx].replace('image_left', 'depth_left').replace('_left.png', '_left_depth.npy'))
+                sample["disparity"]['right'].append(left_images[idx].replace('image_left', 'depth_right').replace('_left.png', '_right_depth.npy'))
 
             self.sample_list.append(sample)
 
@@ -56,9 +51,8 @@ class FallingThings(SequenceDatasetTemplate):
                 img = img[..., :3]
                 output["img"][i].append(img)
 
-                depth = Image.open(sample["disparity"][cam][i])
-                depth = np.array(depth, dtype=np.float32)
-                disp = (460920 / depth).astype(np.float32())  # 6cm * 768.2px * 100 = 460920
+                depth = np.load(sample["disparity"][cam][i])
+                disp = (80.0 / depth).astype(np.float32)
 
                 valid_disp = disp < 512
                 disp = np.array(disp).astype(np.float32)
@@ -84,4 +78,3 @@ class FallingThings(SequenceDatasetTemplate):
         #     'valid_disp': [num_frames, 2(l&r), h, w],
         #  }
         return res
-
