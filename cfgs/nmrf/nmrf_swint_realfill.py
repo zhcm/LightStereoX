@@ -21,7 +21,7 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[352, 640]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[384, 512]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
@@ -29,13 +29,13 @@ sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
 data = LazyConfig.load('cfgs/common/datasets/mono.py')
-data.train_bdd_realfill.augmentations = train_augmentations
+data.train_objects365_realfill.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train_bdd_realfill],
+    all_dataset=[data.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -86,7 +86,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='swin', nor
                        criterion=criterion)
 
 # optim
-lr = 0.0005 * batch_size_per_gpu / 2
+lr = 0.0005 * batch_size_per_gpu / 2 * 2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
