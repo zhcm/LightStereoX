@@ -29,7 +29,7 @@ train_bdd_realfill = LazyCall(RealfillDataset)(
 
 train_objects365_realfill = LazyCall(RealfillDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/objects365_realfill_nas.txt',
+    split_file='/baai-cwm-1/baai_cwm_ml/public_data/scenes/depthAnythingData/txt_path_files/objects365_realfill.txt',
     augmentations=None,
 )
 
