@@ -26,9 +26,11 @@ runtime_params = OmegaConf.create(
     )
 )
 
-# project_root_dir = '/mnt/nas/algorithm/chenming.zhang/code/LightStereoX/'
-# data_root_dir = '/mnt/nas/algorithm/chenming.zhang/dataset/'
 project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
 data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
 ckpt_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
+
+# project_root_dir = '/file_system/vepfs/algorithm/chenming.zhang/code/LightStereoX'
+# data_root_dir = '/file_system/vepfs/public_data'
+# ckpt_root_dir = '/file_system/nas/algorithm/chenming.zhang/checkpoints/LightStereoX'
 
