@@ -21,7 +21,7 @@ train_augmentations = [
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
                                              asymmetric_prob=0.2),
     LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[384, 512]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[352, 640]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
