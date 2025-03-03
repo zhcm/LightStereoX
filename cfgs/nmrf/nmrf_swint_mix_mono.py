@@ -58,13 +58,13 @@ virtualkitti2.train.augmentations = train_augmentations
 virtualkitti2.train.return_right_disp = False
 
 mono = LazyConfig.load('cfgs/common/datasets/mono.py')
-mono.train_object365.augmentations = train_augmentations
+mono.train_objects365_realfill.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[tartanair.train, carla.train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_object365],
+    all_dataset=[tartanair.train, carla.train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
