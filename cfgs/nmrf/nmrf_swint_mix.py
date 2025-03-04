@@ -13,7 +13,7 @@ from stereo.modeling.models.nmrf.NMRF import NMRF, Criterion
 from stereo.modeling.models.nmrf.build_optimizer import build_optimizer, for_compatibility
 from stereo.solver.build import ClipGradNorm
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
 train_augmentations = [
@@ -27,6 +27,7 @@ train_augmentations = [
 
 carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
 carla.train.augmentations = train_augmentations
+carla.weather_train.augmentations = train_augmentations
 
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
 dynamic.train.augmentations = train_augmentations
@@ -122,7 +123,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF')
 runtime_params.max_iter = 81000
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
