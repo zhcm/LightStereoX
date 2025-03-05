@@ -31,6 +31,6 @@ data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
 ckpt_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
 
 # project_root_dir = '/file_system/vepfs/algorithm/chenming.zhang/code/LightStereoX'
-# data_root_dir = '/file_system/vepfs/public_data'
+# data_root_dir = '/file_system/vepfs/public_data/stereo'
 # ckpt_root_dir = '/file_system/nas/algorithm/chenming.zhang/checkpoints/LightStereoX'
 
