@@ -1,6 +1,7 @@
 # @Time    : 2024/6/11 03:14
 # @Author  : zhangchenming
 from omegaconf import OmegaConf
+import configparser
 
 runtime_params = OmegaConf.create(
     dict(
@@ -26,11 +27,23 @@ runtime_params = OmegaConf.create(
     )
 )
 
-project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
-data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
-ckpt_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
+config_file = "cfgs/env.ini"
+config = configparser.ConfigParser()
+config.read(config_file)
 
-# project_root_dir = '/file_system/vepfs/algorithm/chenming.zhang/code/LightStereoX'
-# data_root_dir = '/file_system/vepfs/public_data/stereo'
-# ckpt_root_dir = '/file_system/nas/algorithm/chenming.zhang/checkpoints/LightStereoX'
+env = config['environment']['env'].strip()
+print(env)
+if env == "zy":
+    project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
+    data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
+    ckpt_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
+elif env == "vol":
+    project_root_dir = '/file_system/vepfs/algorithm/chenming.zhang/code/LightStereoX'
+    data_root_dir = '/file_system/vepfs/public_data/stereo'
+    ckpt_root_dir = '/file_system/nas/algorithm/chenming.zhang/checkpoints/LightStereoX'
+else:
+    raise "工作集群为定义(zy or vol)"
+
+
+
 
