@@ -41,22 +41,22 @@ class CarlaDataset(DatasetTemplate):
         else:
             super_pixel_label = super_pixel_label.astype(np.int32)
 
-        if 'baseline_010' in right_path:
-            baseline = 100.0  # mm
-        elif 'baseline_054' in right_path:
-            baseline = 540.0
-        elif 'baseline_100' in right_path:
-            baseline = 1000.0
-        elif 'baseline_200' in right_path:
-            baseline = 2000.0
-        elif 'baseline_300' in right_path:
-            baseline = 3000.0
+        # if 'baseline_010' in right_path:
+        #     baseline = 100.0  # mm
+        # elif 'baseline_054' in right_path:
+        #     baseline = 540.0
+        # elif 'baseline_100' in right_path:
+        #     baseline = 1000.0
+        # elif 'baseline_200' in right_path:
+        #     baseline = 2000.0
+        # elif 'baseline_300' in right_path:
+        #     baseline = 3000.0
+        #
+        # f_pix = 831.38
+        # depth = np.array(Image.open(left_disp_path), dtype=np.float32)
+        # left_disp = baseline * f_pix / (depth + 1e-6)
 
-        f_pix = 831.38
-        depth = np.array(Image.open(left_disp_path), dtype=np.float32)
-        left_disp = baseline * f_pix / (depth + 1e-6)
-
-        # left_disp = np.array(Image.open(left_disp_path), dtype=np.float32)
+        left_disp = np.array(Image.open(left_disp_path), dtype=np.float32)
         occ_mask = np.zeros_like(left_disp, dtype=bool)
 
         sample = {
