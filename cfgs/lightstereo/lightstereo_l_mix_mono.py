@@ -11,10 +11,9 @@ from stereo.modeling.backbones.mobilenet import MobileNetV2
 from stereo.modeling.models.lightstereo.lightstereo import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
-# dataset
 train_augmentations = [
     LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
                                              saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
@@ -24,8 +23,9 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
 carla.train.augmentations = train_augmentations
+carla.weather_train.augmentations = train_augmentations
 
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
 dynamic.train.augmentations = train_augmentations
@@ -48,12 +48,22 @@ tartanair.train.augmentations = train_augmentations
 sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
+spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
+spring.train.augmentations = train_augmentations
+spring.train.return_right_disp = False
+
+virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
+virtualkitti2.train.augmentations = train_augmentations
+virtualkitti2.train.return_right_disp = False
+
+mono = LazyConfig.load('cfgs/common/datasets/mono.py')
+mono.train_objects365_realfill.augmentations = train_augmentations
+
 # dataloader
-batch_size_per_gpu = 4
+batch_size_per_gpu = 8
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train],
+    all_dataset=[tartanair.train, carla.train, carla.weather_train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -90,8 +100,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # train params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/LightStereo_L')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/LightStereo_L')
 runtime_params.train_epochs = 1
-runtime_params.eval_period = 100
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'output/SceneFlowDataset/LightStereo_L/cesc/ckpt/epoch_89/pytorch_model.bin')
-runtime_params.mixed_precision = False
+runtime_params.eval_period = 10
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/LightStereo_L/cesc/ckpt/epoch_89/pytorch_model.bin')
