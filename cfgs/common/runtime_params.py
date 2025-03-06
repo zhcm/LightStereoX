@@ -32,7 +32,6 @@ config = configparser.ConfigParser()
 config.read(config_file)
 
 env = config['environment']['env'].strip()
-print(env)
 if env == "zy":
     project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
     data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
