@@ -13,7 +13,7 @@ from stereo.modeling.models.nmrf.NMRF import NMRF, Criterion
 from stereo.modeling.models.nmrf.build_optimizer import build_optimizer, for_compatibility
 from stereo.solver.build import ClipGradNorm
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir, project_root_dir
 from cfgs.common.constants import constants
 
 train_augmentations = [
@@ -25,8 +25,9 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552057
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
 carla.train.augmentations = train_augmentations
+carla.weather_train.augmentations = train_augmentations
 
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
 dynamic.train.augmentations = train_augmentations
@@ -58,14 +59,13 @@ virtualkitti2.train.augmentations = train_augmentations
 virtualkitti2.train.return_right_disp = False
 
 mono = LazyConfig.load('cfgs/common/datasets/mono.py')
-mono.train.augmentations = train_augmentations
+mono.train_objects365_realfill.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[carla.train, dynamic.train, crestereo.train, fallingthings.train, instereo2k.train,
-                 tartanair.train, sintel.train, mono.train],
+    all_dataset=[tartanair.train, carla.train, carla.weather_train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -116,7 +116,7 @@ model = LazyCall(NMRF)(backbone=LazyCall(create_backbone)(model_type='resnet', n
                        criterion=criterion)
 
 # optim
-lr = 0.0005 * 3
+lr = 0.0005 * batch_size_per_gpu / 2
 optimizer = LazyCall(build_optimizer)(params=LazyCall(for_compatibility)(model=None), base_lr=lr)
 
 # scheduler
@@ -125,9 +125,9 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=300000, all_batchsize=8, epoch=300000/(35454/8), lr=0.0005, 4gpus
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MixDataset/NMRF')
+
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF')
 runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'sceneflow.pth')
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/nmrf_res_sceneflow.pt')
 
