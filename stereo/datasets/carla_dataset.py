@@ -21,7 +21,7 @@ class CarlaDataset(DatasetTemplate):
         right_img = Image.open(right_path).convert('RGB')
         right_img = np.array(right_img, dtype=np.float32)
 
-        super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/Carla', item[0])
+        super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/CarlaV2', item[0])
         super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
         if not os.path.exists(os.path.dirname(super_pixel_label)):
             os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
@@ -41,22 +41,22 @@ class CarlaDataset(DatasetTemplate):
         else:
             super_pixel_label = super_pixel_label.astype(np.int32)
 
-        # if 'baseline_010' in right_path:
-        #     baseline = 100.0  # mm
-        # elif 'baseline_054' in right_path:
-        #     baseline = 540.0
-        # elif 'baseline_100' in right_path:
-        #     baseline = 1000.0
-        # elif 'baseline_200' in right_path:
-        #     baseline = 2000.0
-        # elif 'baseline_300' in right_path:
-        #     baseline = 3000.0
-        #
-        # f_pix = 831.38
-        # depth = np.array(Image.open(left_disp_path), dtype=np.float32)
-        # left_disp = baseline * f_pix / (depth + 1e-6)
+        if 'baseline_010' in right_path:
+            baseline = 10.0
+        elif 'baseline_054' in right_path:
+            baseline = 54.0
+        elif 'baseline_100' in right_path:
+            baseline = 100.0
+        elif 'baseline_200' in right_path:
+            baseline = 200.0
+        elif 'baseline_300' in right_path:
+            baseline = 300.0
 
-        left_disp = np.array(Image.open(left_disp_path), dtype=np.float32)
+        f_pix = 1385.64
+        depth = np.array(Image.open(left_disp_path), dtype=np.float32)  # cm
+        left_disp = baseline * f_pix / (depth + 1e-6)
+
+        # left_disp = np.array(Image.open(left_disp_path), dtype=np.float32)
         occ_mask = np.zeros_like(left_disp, dtype=bool)
 
         sample = {
