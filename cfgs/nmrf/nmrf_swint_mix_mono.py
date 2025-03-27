@@ -129,4 +129,4 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF')
 runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/MonoDataset/NMRF/object365_2nodes/ckpt/epoch_1/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF/mix9_v2/ckpt/epoch_1/pytorch_model.bin')

@@ -15,6 +15,8 @@ class RealfillDataset(DatasetTemplate):
     def __init__(self, data_root_path, split_file, augmentations):
         super().__init__(data_root_path, split_file, augmentations)
         self.warp = WarpDataset()
+        # temp = random.sample(self.data_list, 1200000)
+        # self.data_list = temp
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
