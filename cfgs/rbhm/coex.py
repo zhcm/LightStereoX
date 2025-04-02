@@ -28,12 +28,13 @@ speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
 speedbump.trainv1.augmentations = train_augmentations
 speedbump.trainv2.augmentations = train_augmentations
 speedbump.trainv3.augmentations = train_augmentations
+speedbump.trainv4.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
     is_dist=True,
-    all_dataset=[speedbump.trainv1],
+    all_dataset=[speedbump.trainv4],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,

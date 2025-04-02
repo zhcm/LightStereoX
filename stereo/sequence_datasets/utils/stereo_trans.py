@@ -93,10 +93,18 @@ class RandomScale(object):
             for i in range(len(seq_img)):
                 for cam in (0, 1):
                     seq_img[i][cam] = cv2.resize(seq_img[i][cam], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
-                    if len(seq_disp[i]) > 0:
-                        seq_disp[i][cam] = cv2.resize(seq_disp[i][cam], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
-                        seq_disp[i][cam] = seq_disp[i][cam] * [scale_x, scale_y]
-                        seq_disp[i][cam] = seq_disp[i][cam][..., 0:1].astype(np.float32)
+
+                if len(seq_disp[i]) == 1:
+                    seq_disp[i][0] = cv2.resize(seq_disp[i][0], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+                    seq_disp[i][0] = seq_disp[i][0] * [scale_x, scale_y]
+                    seq_disp[i][0] = seq_disp[i][0][..., 0:1].astype(np.float32)
+                elif len(seq_disp[i]) == 2:
+                    seq_disp[i][0] = cv2.resize(seq_disp[i][0], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+                    seq_disp[i][0] = seq_disp[i][0] * [scale_x, scale_y]
+                    seq_disp[i][0] = seq_disp[i][0][..., 0:1].astype(np.float32)
+                    seq_disp[i][1] = cv2.resize(seq_disp[i][1], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+                    seq_disp[i][1] = seq_disp[i][1] * [scale_x, scale_y]
+                    seq_disp[i][1] = seq_disp[i][1][..., 0:1].astype(np.float32)
 
         sample['img'] = seq_img
         sample['disp'] = seq_disp
@@ -126,9 +134,11 @@ class RandomCrop(object):
             seq_img[i][0] = seq_img[i][0][y0: y0 + crop_height, x0: x0 + crop_width]
             seq_img[i][1] = seq_img[i][1][y1: y1 + crop_height, x0: x0 + crop_width]
 
-            if len(seq_disp[i]) > 0:
+            if len(seq_disp[i]) == 2:
                 seq_disp[i][0] = seq_disp[i][0][y0: y0 + crop_height, x0: x0 + crop_width]
                 seq_disp[i][1] = seq_disp[i][1][y1: y1 + crop_height, x0: x0 + crop_width]
+            elif len(seq_disp[i]) == 1:
+                seq_disp[i][0] = seq_disp[i][0][y0: y0 + crop_height, x0: x0 + crop_width]
 
         sample['img'] = seq_img
         sample['disp'] = seq_disp
