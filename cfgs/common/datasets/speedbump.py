@@ -9,7 +9,8 @@ from stereo.datasets import build_dataloader
 from cfgs.common.runtime_params import data_root_dir
 from cfgs.common.constants import constants
 
-data_root_path = os.path.join(data_root_dir, 'CarlaSpeedbumps')
+# data_root_path = os.path.join(data_root_dir, 'CarlaSpeedbumps')
+data_root_path = '/file_system/vepfs/public_data/StereoRBHM/CarlaSpeedbumpsV4'
 
 trainv1 = LazyCall(SpeedBump)(
     data_root_path=data_root_path,

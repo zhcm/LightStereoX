@@ -11,7 +11,7 @@ from stereo.modeling.backbones.mobilenet import MobileNetV2
 from stereo.modeling.models.stereobase.stereobase_gru import StereoBase
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, project_root_dir, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -73,7 +73,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=1.0)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SceneflowDataset/StereoBase')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SceneflowDataset/StereoBase')
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True
 # runtime_params.freeze_bn = True

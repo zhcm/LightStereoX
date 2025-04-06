@@ -15,6 +15,13 @@ class SpeedBump(DatasetTemplate):
     def __getitem__(self, idx):
         item = self.data_list[idx]
         left_path, right_path, disp_path, seg_path, height, baseline, focallength, height_path = item
+
+        left_path = os.path.join(self.root, left_path)
+        right_path = os.path.join(self.root, right_path)
+        disp_path = os.path.join(self.root, disp_path)
+        seg_path = os.path.join(self.root, seg_path)
+        height_path = os.path.join(self.root, height_path)
+
         height_map = np.load(height_path).astype(np.float32) * 100  # cm
 
         left_img = Image.open(left_path).convert('RGB')
@@ -36,11 +43,11 @@ class SpeedBump(DatasetTemplate):
         #     cv2.imwrite(super_pixel_label, label.astype(np.uint16))
         # super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.int32)
 
-        disp = np.array(Image.open(disp_path), dtype=np.float32)
+        disp = np.load(disp_path).astype(np.float32)
         seg = np.array(Image.open(seg_path), dtype=np.float32)
-        bump_mask = seg == 230
+        bump_mask = seg == 230  # 原始分割id 230, bisenet分割id 255
         height = float(height)  # cm
-        # assert bump_mask.any()
+        assert bump_mask.any()
 
         sample = {
             'left': left_img,

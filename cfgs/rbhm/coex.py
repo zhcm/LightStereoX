@@ -10,7 +10,7 @@ from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.coex.coex import CoEx
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, project_root_dir, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -31,7 +31,7 @@ speedbump.trainv3.augmentations = train_augmentations
 speedbump.trainv4.augmentations = train_augmentations
 
 # dataloader
-batch_size_per_gpu = 4
+batch_size_per_gpu = 12
 train_loader = LazyCall(build_dataloader)(
     is_dist=True,
     all_dataset=[speedbump.trainv4],
@@ -42,7 +42,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=True,
-    all_dataset=[speedbump.valv1],
+    all_dataset=[speedbump.valv4],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -52,7 +52,7 @@ val_loader = LazyCall(build_dataloader)(
 model = LazyCall(CoEx)()
 
 # optim
-lr = 0.0001 * batch_size_per_gpu / 2
+lr = 0.0001 * batch_size_per_gpu / 8
 optimizer = LazyCall(AdamW)(
     params=LazyCall(get_model_params)(model=None),
     lr=lr,
@@ -66,7 +66,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBumpDataset/COEX')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/COEX')
 runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True

@@ -34,7 +34,7 @@ data.weather_train.augmentations = train_augmentations
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train, data.weather_train],
+    all_dataset=[data.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -96,6 +96,6 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 # runtime params max_iter=500000, all_batchsize=1, lr=0.0005
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/CarlaDataset/NMRF')
-runtime_params.train_epochs = 5
+runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-# runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
