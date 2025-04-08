@@ -11,50 +11,60 @@ from stereo.modeling.backbones.mobilenet import MobileNetV2
 from stereo.modeling.models.stereobase.stereobase_gru import StereoBase
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, project_root_dir, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
 train_augmentations = [
-    LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 672]),
+    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4],
+                                             saturation=[0.6, 1.4], hue=[-0.5 / 3.14, 0.5 / 3.14],
+                                             asymmetric_prob=0.2),
+    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
+    LazyCall(stereo_trans.RandomCrop)(crop_size=[352, 640]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-crestereo = LazyConfig.load('cfgs/common/datasets/crestereo.py')
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
+carla.train.augmentations = train_augmentations
+carla.weather_train.augmentations = train_augmentations
+
+dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
+dynamic.train.augmentations = train_augmentations
+
+crestereo = LazyConfig.load('cfgs/common/datasets/crestereo.py')  # 200000
 crestereo.train.augmentations = train_augmentations
 crestereo.train.return_right_disp = False
 
-drivingstereo = LazyConfig.load('cfgs/common/datasets/drivingstereo.py')
-drivingstereo.train.augmentations = train_augmentations
-
-fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')
+fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
 fallingthings.train.augmentations = train_augmentations
 fallingthings.train.return_right_disp = False
 
-instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')
+instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # 2010
 instereo2k.train.augmentations = train_augmentations
 instereo2k.train.return_right_disp = False
 
-sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
-sceneflow.train.augmentations = train_augmentations
-sceneflow.train.return_right_disp = False
+tartanair = LazyConfig.load('cfgs/common/datasets/tartanair.py')  # 306637
+tartanair.train.augmentations = train_augmentations
 
-sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')
+sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
 
-unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')
-unrealstereo4k.train.augmentations = train_augmentations
-unrealstereo4k.train.return_right_disp = False
+spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
+spring.train.augmentations = train_augmentations
+spring.train.return_right_disp = False
 
-virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')
+virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
 virtualkitti2.train.augmentations = train_augmentations
 virtualkitti2.train.return_right_disp = False
+
+mono = LazyConfig.load('cfgs/common/datasets/mono.py')
+mono.train_objects365_realfill.augmentations = train_augmentations
 
 # dataloader
 batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[crestereo.train, drivingstereo.train, fallingthings.train, instereo2k.train, sceneflow.train,  sintel.train, unrealstereo4k.train, virtualkitti2.train],
+    all_dataset=[tartanair.train, carla.train, carla.weather_train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train, mono.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -62,7 +72,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[sceneflow.val],
+    all_dataset=[sintel.train],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -99,7 +109,8 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=1.0)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/MultiDataset/StereoBase')
-runtime_params.train_epochs = 10
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/StereoBase')
+runtime_params.train_epochs = 1
 runtime_params.mixed_precision = True
 # runtime_params.freeze_bn = True
+runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/stereobase.pt')
