@@ -10,7 +10,7 @@ from stereo.datasets.utils import stereo_trans
 from stereo.modeling.models.igev.igev_stereo_speedbump import IGEVStereo
 from stereo.solver.build import get_model_params, ClipGradValue, ClipGradNorm
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, project_root_dir, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -26,12 +26,13 @@ train_augmentations = [
 
 speedbump = LazyConfig.load('cfgs/common/datasets/speedbump.py')
 speedbump.trainv3.augmentations = train_augmentations
+speedbump.trainv4.augmentations = train_augmentations
 
 # dataloader
-batch_size_per_gpu = 1
+batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.trainv3],
+    all_dataset=[speedbump.trainv4],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -39,7 +40,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.val],
+    all_dataset=[speedbump.valv4],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -63,7 +64,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradNorm)(max_norm=35)
 
 # train params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBumpDataset/IGEV')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/IGEV')
 runtime_params.train_epochs = 20
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True
