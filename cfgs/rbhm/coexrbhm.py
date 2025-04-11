@@ -11,7 +11,7 @@ from stereo.modeling.models.coex.coexrbhm import CoExHeight
 from stereo.solver.build import get_model_params, ClipGradValue
 from stereo.solver.trainer_rbhm import RBHMTrainer
 
-from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir, project_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -36,7 +36,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.valv3],
+    all_dataset=[speedbump.valv4],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
@@ -44,10 +44,8 @@ val_loader = LazyCall(build_dataloader)(
 
 # model
 model = LazyCall(CoExHeight)(
-    rbhm_pretrained=os.path.join(
-        ckpt_root_dir,
-        'output/SpeedBumpDataset/RBHM/bumpmask_v3dataset_retrain/ckpt/epoch_60/pytorch_model.bin'
-    ))
+    rbhm_pretrained=os.path.join(project_root_dir, 'output/SpeedBumpDataset/RBHM/rbhm_v4/ckpt/epoch_34/pytorch_model.bin')
+)
 
 # optim
 lr = 0.0001 * batch_size_per_gpu
@@ -70,4 +68,4 @@ runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpData
 runtime_params.train_epochs = 60
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True
-runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/COEX/dilated_bumpmask_v3dataset/ckpt/epoch_60/pytorch_model.bin')
+# runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/COEX/dilated_bumpmask_v3dataset/ckpt/epoch_60/pytorch_model.bin')
