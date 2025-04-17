@@ -15,8 +15,8 @@ class RBHMTrainer(Trainer):
     @torch.no_grad()
     def eval_one_epoch(self, current_epoch):
         all_indexes = []
-        metric_names = ['abs_h']
-        all_metrics = {'abs_h': []}
+        metric_names = ['abs_h', 'abl_h']
+        all_metrics = {'abs_h': [], 'abl_h': []}
 
         for i, data in enumerate(self.val_loader):
             for k, v in data.items():
@@ -39,6 +39,7 @@ class RBHMTrainer(Trainer):
                 else:
                     pred_h = 0
                 all_metrics['abs_h'].append(abs(pred_h - data['height'][batch_index]))
+                all_metrics['abl_h'].append(abs(pred_h - data['height'][batch_index]) / data['height'][batch_index])
 
             all_indexes.extend(data['index'].tolist())
 

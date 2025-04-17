@@ -80,7 +80,7 @@ class hourglass(nn.Module):
 
 
 class IGEVStereo(nn.Module):
-    def __init__(self):
+    def __init__(self, rbhm_pretrained=''):
         super().__init__()
         args = Map(MAX_DISP=192,
                    HIDDEN_DIMS=[128, 128, 128],
@@ -138,7 +138,7 @@ class IGEVStereo(nn.Module):
         self.classifier = nn.Conv3d(8, 1, 3, 1, 1, bias=False)
 
         self.height_head = Refinement(in_channels=4)
-        pretrained_state_dict = torch.load('/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX/output/SpeedBumpDataset/RBHM/bumpmask_v3dataset/ckpt/epoch_60/pytorch_model.bin', map_location='cpu')
+        pretrained_state_dict = torch.load(rbhm_pretrained, map_location='cpu')
         state_dict = {}
         for key, val in pretrained_state_dict.items():
             state_dict[key.replace('height_head.', '')] = val

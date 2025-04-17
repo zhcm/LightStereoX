@@ -11,7 +11,7 @@ from stereo.modeling.models.igev.igevrbhm import IGEVStereo
 from stereo.solver.build import get_model_params, ClipGradValue, ClipGradNorm
 from stereo.solver.trainer_rbhm import RBHMTrainer
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
@@ -40,14 +40,16 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[speedbump.val],
+    all_dataset=[speedbump.valv4],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
     pin_memory=True)
 
 # model
-model = LazyCall(IGEVStereo)()
+model = LazyCall(IGEVStereo)(
+    rbhm_pretrained=os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/RBHM/rbhm_v4/ckpt/epoch_34/pytorch_model.bin')
+)
 
 # optim
 lr = 0.0001
@@ -66,9 +68,8 @@ clip_grad = LazyCall(ClipGradNorm)(max_norm=35)
 trainer = LazyCall(RBHMTrainer)(args=None, cfg=None, logger=None, tb_writer=None)
 
 # train params
-runtime_params.save_root_dir = os.path.join(project_root_dir, 'output/SpeedBumpDataset/IGEV')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/IGEV')
 runtime_params.train_epochs = 20
 runtime_params.mixed_precision = False
 runtime_params.find_unused_parameters = True
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/IGEV_Sceneflow_Amp.pt')
 
