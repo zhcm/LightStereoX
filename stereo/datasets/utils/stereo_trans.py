@@ -314,7 +314,7 @@ class RandomScale(object):
                     sample[k] = cv2.resize(sample[k], None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
                     sample[k] = sample[k] * scale_x
 
-                elif k in ['occ_mask']:
+                elif k in ['occ_mask', 'occ_mask_2']:
                     uint8_array = sample[k].astype(np.uint8)
                     resized_array = cv2.resize(uint8_array, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_NEAREST)
                     sample[k] = resized_array.astype(bool)
