@@ -11,21 +11,30 @@ from stereo.modeling.backbones.mobilenet import MobileNetV2
 from stereo.modeling.models.stereobase.stereobase_gru import StereoBase
 from stereo.solver.build import get_model_params, ClipGradValue
 
-from cfgs.common.runtime_params import runtime_params, project_root_dir, ckpt_root_dir
+from cfgs.common.runtime_params import runtime_params, ckpt_root_dir
 from cfgs.common.constants import constants
 
 # dataset
 train_augmentations = [
+    LazyCall(stereo_trans.StereoColorJitter)(brightness=[0.6, 1.4], contrast=[0.6, 1.4], saturation=[0.6, 1.4], hue=[-0.5, 0.5], asymmetric_prob=0.2),
+    LazyCall(stereo_trans.RandomErase)(prob=0.5, max_time=2, bounds=[50, 100]),
+    LazyCall(stereo_trans.RandomScale)(crop_size=[320, 736], min_pow_scale=-0.2, max_pow_scale=0.4, scale_prob=0.8, stretch_prob=0.8),
     LazyCall(stereo_trans.RandomCrop)(crop_size=[320, 736]),
+    LazyCall(stereo_trans.NormalizeImage)(mean=constants.rgb_mean, std=constants.rgb_std)
+]
+
+val_augmentations = [
+    LazyCall(stereo_trans.ConstantPad)(target_size=[544, 960]),
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.rgb_mean, std=constants.rgb_std)
 ]
 
 sceneflow = LazyConfig.load('cfgs/common/datasets/sceneflow.py')
 sceneflow.train.augmentations = train_augmentations
 sceneflow.train.return_right_disp = False
+sceneflow.val.augmentations = val_augmentations
 
 # dataloader
-batch_size_per_gpu = 3
+batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.train],
@@ -37,7 +46,7 @@ train_loader = LazyCall(build_dataloader)(
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[sceneflow.val],
-    batch_size=batch_size_per_gpu,
+    batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
     pin_memory=True)
@@ -76,4 +85,4 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=1.0)
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/StereoBase')
 runtime_params.train_epochs = 90
 runtime_params.mixed_precision = True
-# runtime_params.freeze_bn = True
+runtime_params.freeze_bn = True
