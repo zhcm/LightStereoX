@@ -33,7 +33,7 @@ config.read(config_file)
 
 env = config['environment']['env'].strip()
 if env == "zy":
-    project_root_dir = '/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/code/LightStereoX'
+    project_root_dir = '/baai-cwm-1/baai_cwm_ml/cwm/xianda.guo/code/chm/code/LightStereoX'
     data_root_dir = '/baai-cwm-1/baai_cwm_ml/public_data/scenes/stereo'
     ckpt_root_dir = '/baai-cwm-nas/algorithm/xianda.guo/checkpoints/chm/LightStereoX'
 elif env == "vol":
