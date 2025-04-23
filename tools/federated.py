@@ -40,3 +40,15 @@ def average_model_weights(model_paths):
 
 avg_weights = average_model_weights(model_paths)
 torch.save(avg_weights, '/file_system/nas/algorithm/chenming.zhang/checkpoints/LightStereoX/output/Federated/average/ckpt/epoch_1/pytorch_model.bin')
+
+# kitti12
+# run 9个model
+# 每张图9个结果
+# mean 每张图得到一个结果，把这个mean的结果当作gt
+# 每个model在kitti12上的epe就可以得到（pred - mean_gt).mean()
+
+# 9个epe
+# 1 - softmax(epe)
+# 得到了一个和为1的概率
+# 根据这个概率，以及上面的代码，把这9个model的权重做加权求和
+# 保存最终权重
