@@ -10,6 +10,8 @@ from stereo.modeling.models.lightstereo.basic_block_2d import BasicConv2d, Basic
 from stereo.modeling.models.lightstereo.neck import Neck, FPNLayer
 from stereo.modeling.models.lightstereo.aggregation import Aggregation
 
+from .rbhm import Refinement
+
 
 class LightStereo(nn.Module):
     def __init__(self, backbone, max_disp, aggregation_blocks, expanse_ratio, left_att=True, rbhm_pretrained=''):
@@ -77,7 +79,10 @@ class LightStereo(nn.Module):
         spx_pred = F.softmax(xspx, 1)  # [bz, 9, H, W]
         disp_pred = context_upsample(init_disp * 4., spx_pred.float()).unsqueeze(1)  # # [bz, 1, H, W]
 
-        result = {'disp_pred': disp_pred}
+        pred_height = self.height_head(torch.cat([data["left"], disp_pred], dim=1))
+        pred_height = torch.sigmoid(pred_height) * 10
+        result = {'disp_pred': disp_pred,
+                  'pred_height': pred_height.squeeze(1)}
 
         if self.training:
             disp_4 = F.interpolate(init_disp, image1.shape[2:], mode='bilinear', align_corners=False)

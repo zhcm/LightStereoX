@@ -8,6 +8,7 @@ from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
 from stereo.modeling.backbones.mobilenet import MobileNetV2
+from stereo.modeling.models.rbhm.lightstereorbhm import LightStereo
 from stereo.solver.build import get_model_params, ClipGradValue
 from stereo.solver.trainer_rbhm import RBHMTrainer
 
