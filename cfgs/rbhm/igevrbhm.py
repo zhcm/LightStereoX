@@ -7,8 +7,8 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.igev.igevrbhm import IGEVStereo
-from stereo.solver.build import get_model_params, ClipGradValue, ClipGradNorm
+from stereo.modeling.models.rbhm.igevrbhm import IGEVStereo
+from stereo.solver.build import get_model_params, ClipGradNorm
 from stereo.solver.trainer_rbhm import RBHMTrainer
 
 from cfgs.common.runtime_params import runtime_params, ckpt_root_dir

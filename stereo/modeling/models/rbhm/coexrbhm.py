@@ -3,11 +3,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .coex_backbone import CoExBackbone
-from .coex_cost_processor import CoExCostProcessor
-from .coex_disp_processor import CoExDispProcessor
-from functools import partial
-from .rbhm import Refinement
+from stereo.modeling.models.coex.coex_backbone import CoExBackbone
+from stereo.modeling.models.coex.coex_cost_processor import CoExCostProcessor
+from stereo.modeling.models.coex.coex_disp_processor import CoExDispProcessor
+from stereo.modeling.models.rbhm.rbhm import Refinement
 
 
 class CoExHeight(nn.Module):
