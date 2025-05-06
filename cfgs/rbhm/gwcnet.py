@@ -31,7 +31,7 @@ speedbump.trainv3.augmentations = train_augmentations
 speedbump.trainv4.augmentations = train_augmentations
 
 # dataloader
-batch_size_per_gpu = 12
+batch_size_per_gpu = 4
 train_loader = LazyCall(build_dataloader)(
     is_dist=True,
     all_dataset=[speedbump.trainv4],
@@ -68,6 +68,6 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 # runtime params
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/GwcNet')
 runtime_params.train_epochs = 60
+runtime_params.eval_period = 100
 runtime_params.mixed_precision = False
-runtime_params.find_unused_parameters = True
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/gwcnet_sceneflow.pt')
