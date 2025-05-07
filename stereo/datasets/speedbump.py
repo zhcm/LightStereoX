@@ -9,8 +9,9 @@ from .dataset_template import DatasetTemplate
 
 
 class SpeedBump(DatasetTemplate):
-    def __init__(self, data_root_path, split_file, augmentations):
+    def __init__(self, data_root_path, split_file, augmentations, return_super_pixel_label=False):
         super().__init__(data_root_path, split_file, augmentations)
+        self.return_super_pixel_label = return_super_pixel_label
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
@@ -30,19 +31,6 @@ class SpeedBump(DatasetTemplate):
         right_img = Image.open(right_path).convert('RGB')
         right_img = np.array(right_img, dtype=np.float32)
 
-        # save_name = Path(item[0]).relative_to('/mnt/nas/public_data/stereo/CarlaSpeedbumps')
-        # super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/SpeedBump', save_name)
-        # super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
-        # if not os.path.exists(os.path.dirname(super_pixel_label)):
-        #     os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
-        # if not os.path.exists(super_pixel_label):
-        #     img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
-        #     lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
-        #     lsc.iterate(20)
-        #     label = lsc.getLabels()
-        #     cv2.imwrite(super_pixel_label, label.astype(np.uint16))
-        # super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.int32)
-
         disp = np.load(disp_path).astype(np.float32)
         seg = np.array(Image.open(seg_path), dtype=np.float32)
         bump_mask = seg == 230  # 原始分割id 230, bisenet分割id 255
@@ -54,9 +42,30 @@ class SpeedBump(DatasetTemplate):
             'right': right_img,
             'disp': disp,
             'bump_mask': bump_mask,
-            'height_map': height_map,
-            # 'super_pixel_label': super_pixel_label
+            'height_map': height_map
         }
+
+        if self.return_super_pixel_label:
+            super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/SpeedBump', item[0])
+            super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
+            if not os.path.exists(os.path.dirname(super_pixel_label)):
+                os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
+            if not os.path.exists(super_pixel_label):
+                img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
+                lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
+                lsc.iterate(20)
+                label = lsc.getLabels()
+                cv2.imwrite(super_pixel_label, label.astype(np.uint16))
+            super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+            if super_pixel_label is None:
+                img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
+                lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
+                lsc.iterate(20)
+                label = lsc.getLabels()
+                super_pixel_label = label.astype(np.int32)
+            else:
+                super_pixel_label = super_pixel_label.astype(np.int32)
+            sample['super_pixel_label'] = super_pixel_label
 
         if self.augmentations is not None:
             for t in self.augmentations:
@@ -75,7 +84,7 @@ class SpeedBump(DatasetTemplate):
 
         sample['bump_height_map'] = sample['height_map'].copy()
         sample['bump_height_map'][~sample['bump_mask']] = 0
-        # sample['occ_mask'] = ~sample['bump_mask']
+        sample['occ_mask'] = ~sample['bump_mask']
 
         sample['valid'] = sample['disp'] < 512
         sample['height'] = height
