@@ -65,5 +65,6 @@ clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 # runtime params
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/MSNet2D')
 runtime_params.train_epochs = 30
+runtime_params.eval_period=100
 runtime_params.mixed_precision = False
 runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/msnet2d_sceneFlow.pt')
