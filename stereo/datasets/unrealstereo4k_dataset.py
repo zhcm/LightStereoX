@@ -32,7 +32,15 @@ class UnrealStereo4KDataset(DatasetTemplate):
             lsc.iterate(20)
             label = lsc.getLabels()
             cv2.imwrite(super_pixel_label, label.astype(np.uint16))
-        super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH).astype(np.int32)
+        super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+        if super_pixel_label is None:
+            img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
+            lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
+            lsc.iterate(20)
+            label = lsc.getLabels()
+            super_pixel_label = label.astype(np.int32)
+        else:
+            super_pixel_label = super_pixel_label.astype(np.int32)
 
         disp_left = np.load(disp_left_path, mmap_mode='c')
         occ_mask = np.zeros_like(disp_left, dtype=bool)

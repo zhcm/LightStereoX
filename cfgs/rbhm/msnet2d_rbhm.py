@@ -7,8 +7,9 @@ from torch.optim.lr_scheduler import OneCycleLR
 from stereo.config.lazy import LazyCall, LazyConfig
 from stereo.datasets import build_dataloader
 from stereo.datasets.utils import stereo_trans
-from stereo.modeling.models.msnet.MSNet2D import MSNet2D
+from stereo.modeling.models.rbhm.MSNet2Drbhm import MSNet2D
 from stereo.solver.build import get_model_params, ClipGradValue
+from stereo.solver.trainer_rbhm import RBHMTrainer
 
 from cfgs.common.runtime_params import runtime_params, ckpt_root_dir, project_root_dir
 from cfgs.common.constants import constants
@@ -39,14 +40,14 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=True,
-    all_dataset=[speedbump.valv4],
+    all_dataset=[speedbump.valv4_bisenet],
     batch_size=batch_size_per_gpu,
     shuffle=False,
     workers=8,
     pin_memory=True)
 
 # model
-model = LazyCall(MSNet2D)()
+model = LazyCall(MSNet2D)(rbhm_pretrained=os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/RBHM/rbhm_v4/ckpt/epoch_34/pytorch_model.bin'))
 
 # optim
 lr = 0.0001 * batch_size_per_gpu / 8
@@ -62,9 +63,10 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 # clip grad
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
+trainer = LazyCall(RBHMTrainer)(args=None, cfg=None, logger=None, tb_writer=None)
+
 # runtime params
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpeedBumpDataset/MSNet2D')
 runtime_params.train_epochs = 30
 runtime_params.eval_period = 100
 runtime_params.mixed_precision = False
-runtime_params.pretrained_model = os.path.join(project_root_dir, 'ckpt/msnet2d_sceneFlow.pt')
