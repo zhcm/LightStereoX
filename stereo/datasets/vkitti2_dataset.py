@@ -7,9 +7,10 @@ from .dataset_template import DatasetTemplate
 
 
 class VirtualKitti2Dataset(DatasetTemplate):
-    def __init__(self, data_root_path, split_file, augmentations, return_right_disp):
+    def __init__(self, data_root_path, split_file, augmentations, return_right_disp, return_super_pixel_label=False):
         super().__init__(data_root_path, split_file, augmentations)
         self.return_right_disp = return_right_disp
+        self.return_super_pixel_label = return_super_pixel_label
 
     def __getitem__(self, idx):
         item = self.data_list[idx]
@@ -20,26 +21,6 @@ class VirtualKitti2Dataset(DatasetTemplate):
         right_img = Image.open(right_img_path).convert('RGB')
         right_img = np.array(right_img, dtype=np.float32)
 
-        super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/VirtualKitti2', item[0])
-        super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
-        if not os.path.exists(os.path.dirname(super_pixel_label)):
-            os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
-        if not os.path.exists(super_pixel_label):
-            img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
-            lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
-            lsc.iterate(20)
-            label = lsc.getLabels()
-            cv2.imwrite(super_pixel_label, label.astype(np.uint16))
-        super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
-        if super_pixel_label is None:
-            img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
-            lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
-            lsc.iterate(20)
-            label = lsc.getLabels()
-            super_pixel_label = label.astype(np.int32)
-        else:
-            super_pixel_label = super_pixel_label.astype(np.int32)
-
         disp_img = get_disp(disp_img_path).astype(np.float32)
         assert not np.isnan(disp_img).any(), 'disp_img has nan'
         occ_mask = np.zeros_like(disp_img, dtype=bool)
@@ -47,9 +28,31 @@ class VirtualKitti2Dataset(DatasetTemplate):
             'left': left_img,  # [H, W, 3]
             'right': right_img,  # [H, W, 3]
             'disp': disp_img,  # [H, W]
-            'occ_mask': occ_mask,
-            'super_pixel_label': super_pixel_label
+            'occ_mask': occ_mask
         }
+
+        if self.return_super_pixel_label:
+            super_pixel_label = Path(self.root).parent.joinpath('SuperPixelLabel/VirtualKitti2', item[0])
+            super_pixel_label = str(super_pixel_label)[:-len('.png')] + "_lsc_lbl.png"
+            if not os.path.exists(os.path.dirname(super_pixel_label)):
+                os.makedirs(os.path.dirname(super_pixel_label), exist_ok=True)
+            if not os.path.exists(super_pixel_label):
+                img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
+                lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
+                lsc.iterate(20)
+                label = lsc.getLabels()
+                cv2.imwrite(super_pixel_label, label.astype(np.uint16))
+            super_pixel_label = cv2.imread(super_pixel_label, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+            if super_pixel_label is None:
+                img = cv2.cvtColor(left_img, cv2.COLOR_RGB2BGR)
+                lsc = cv2.ximgproc.createSuperpixelLSC(img, region_size=10, ratio=0.075)
+                lsc.iterate(20)
+                label = lsc.getLabels()
+                super_pixel_label = label.astype(np.int32)
+            else:
+                super_pixel_label = super_pixel_label.astype(np.int32)
+            sample['super_pixel_label'] = super_pixel_label
+
         if self.return_right_disp:
             disp_img_right = get_disp(disp_img_right_path).astype(np.float32)
             sample['disp_right'] = disp_img_right

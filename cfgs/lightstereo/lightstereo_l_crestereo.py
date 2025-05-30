@@ -26,8 +26,9 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-data = LazyConfig.load('cfgs/common/datasets/spring.py')
+data = LazyConfig.load('cfgs/common/datasets/crestereo.py')
 data.train.augmentations = train_augmentations
+data.train.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 8
@@ -70,7 +71,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradValue)(clip_value=0.1)
 
 # runtime params
-runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/SpringDataset/LightStereo_L')
+runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/CREStereoDataset/LightStereo_L')
 runtime_params.max_iter = int(700000 / 8 / 8)
 runtime_params.eval_period = 10
 runtime_params.mixed_precision = False
