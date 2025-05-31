@@ -28,7 +28,6 @@ train_augmentations = [
 
 data = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')
 data.train.augmentations = train_augmentations
-data.val.return_right_disp = False
 
 # dataloader
 batch_size_per_gpu = 8
