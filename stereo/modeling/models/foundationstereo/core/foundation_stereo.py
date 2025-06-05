@@ -13,12 +13,12 @@ import torch.nn.functional as F
 import sys,os
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{code_dir}/../')
-from core.update import *
-from core.extractor import *
-from core.geometry import Combined_Geo_Encoding_Volume
-from core.submodule import *
-from core.utils.utils import *
-from Utils import *
+from stereo.modeling.models.foundationstereo.core.update import *
+from stereo.modeling.models.foundationstereo.core.extractor import *
+from stereo.modeling.models.foundationstereo.core.geometry import Combined_Geo_Encoding_Volume
+from stereo.modeling.models.foundationstereo.core.submodule import *
+from stereo.modeling.models.foundationstereo.core.utils.utils import *
+from stereo.modeling.models.foundationstereo.Utils import *
 import time,huggingface_hub
 
 
@@ -132,6 +132,7 @@ class FoundationStereo(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         context_dims = args.hidden_dims
         self.cv_group = 8
         volume_dim = 28
+        self.max_disp = args.max_disp
 
         self.cnet = ContextNetDino(args, output_dim=[args.hidden_dims, context_dims], downsample=args.n_downsample)
         self.update_block = BasicSelectiveMultiUpdateBlock(self.args, self.args.hidden_dims[0], volume_dim=volume_dim)
@@ -191,7 +192,13 @@ class FoundationStereo(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         return up_disp.float()
 
 
-    def forward(self, image1, image2, iters=12, flow_init=None, test_mode=False, low_memory=False, init_disp=None):
+    def forward(self, data):
+        image1 = data['left']
+        image2 = data['right']
+        low_memory = False
+        init_disp = None
+        test_mode = not self.training
+        iters = self.args.valid_iters if test_mode else self.args.train_iters
         """ Estimate disparity between pair of frames """
         B = len(image1)
         low_memory = low_memory or (self.args.get('low_memory', False))
@@ -247,12 +254,12 @@ class FoundationStereo(nn.Module, huggingface_hub.PyTorchModelHubMixin):
             disp_up = self.upsample_disp(disp.float(), mask_feat_4.float(), stem_2x.float())
             disp_preds.append(disp_up)
 
-
         if test_mode:
-            return disp_up
+            return {'disp_pred': disp_up}
 
-        return init_disp, disp_preds
-
+        return {'init_disp': init_disp,
+                'disp_preds': disp_preds,
+                'disp_pred': disp_preds[-1]}
 
     def run_hierachical(self, image1, image2, iters=12, test_mode=False, low_memory=False, small_ratio=0.5):
       B,_,H,W = image1.shape
@@ -273,3 +280,32 @@ class FoundationStereo(nn.Module, huggingface_hub.PyTorchModelHubMixin):
       disp = padder.unpad(disp.float())
       return disp
 
+    def get_loss(self, model_pred, input_data):
+        disp_gt = input_data["disp"]
+        mask = (disp_gt < self.max_disp) & (disp_gt > 0)
+        valid = mask.float()
+
+        disp_gt = disp_gt.unsqueeze(1)
+        mag = torch.sum(disp_gt ** 2, dim=1).sqrt()
+        valid = ((valid >= 0.5) & (mag < self.max_disp)).unsqueeze(1)
+        assert valid.shape == disp_gt.shape, [valid.shape, disp_gt.shape]
+        assert not torch.isinf(disp_gt[valid.bool()]).any()
+
+        disp_init_pred = model_pred['init_disp']
+        disp_init_pred = F.interpolate(disp_init_pred, scale_factor=4, mode='bilinear', align_corners=True) * 4
+        disp_loss = 1.0 * F.smooth_l1_loss(disp_init_pred[valid.bool()], disp_gt[valid.bool()], reduction='mean')
+
+        # gru loss
+        loss_gamma = 0.9
+        disp_preds = model_pred['disp_preds']
+        n_predictions = len(disp_preds)
+        assert n_predictions >= 1
+        for i in range(n_predictions):
+            adjusted_loss_gamma = loss_gamma ** (15 / (n_predictions - 1))
+            i_weight = adjusted_loss_gamma ** (n_predictions - i - 1)
+            i_loss = (disp_preds[i] - disp_gt).abs()
+            assert i_loss.shape == valid.shape, [i_loss.shape, valid.shape, disp_gt.shape, disp_preds[i].shape]
+            disp_loss += i_weight * i_loss[valid.bool()].mean()
+
+        loss_info = {'scalar/train/loss_disp': disp_loss.item()}
+        return disp_loss, loss_info
