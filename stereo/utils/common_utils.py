@@ -72,7 +72,7 @@ def backup_source_code(backup_dir):
     # 子文件夹下的同名也会被忽略
     ignore_hidden = shutil.ignore_patterns(
         ".idea", ".git*", "*pycache*",
-        "cfgs", "data", "output")
+        "data", "output")
 
     if os.path.exists(backup_dir):
         shutil.rmtree(backup_dir)
