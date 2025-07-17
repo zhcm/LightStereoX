@@ -86,9 +86,7 @@ batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
     all_dataset=[foundationstereo.train, carla.train, carla.weather_train, tartanair.train,
-                 crestereo.train, spring.train, sintel.train,
-                 dynamic.train, fallingthings.train, instereo2k.train,
-                 virtualkitti2.train, unrealstereo4k.train],
+                 crestereo.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,

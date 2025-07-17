@@ -28,41 +28,65 @@ train_augmentations = [
 carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
 carla.train.augmentations = train_augmentations
 carla.weather_train.augmentations = train_augmentations
+carla.train.return_super_pixel_label = True
+carla.weather_train.return_super_pixel_label = True
 
 dynamic = LazyConfig.load('cfgs/common/datasets/dynamic.py')  # 144900
 dynamic.train.augmentations = train_augmentations
+dynamic.train.return_super_pixel_label = True
 
 crestereo = LazyConfig.load('cfgs/common/datasets/crestereo.py')  # 200000
 crestereo.train.augmentations = train_augmentations
 crestereo.train.return_right_disp = False
+crestereo.train.return_super_pixel_label = True
 
 fallingthings = LazyConfig.load('cfgs/common/datasets/fallingthings.py')  # 61500
 fallingthings.train.augmentations = train_augmentations
 fallingthings.train.return_right_disp = False
+fallingthings.train.return_super_pixel_label = True
 
 instereo2k = LazyConfig.load('cfgs/common/datasets/instereo2k.py')  # 2010
 instereo2k.train.augmentations = train_augmentations
 instereo2k.train.return_right_disp = False
+instereo2k.train.return_super_pixel_label = True
 
 tartanair = LazyConfig.load('cfgs/common/datasets/tartanair.py')  # 306637
 tartanair.train.augmentations = train_augmentations
+tartanair.train.return_super_pixel_label = True
 
 sintel = LazyConfig.load('cfgs/common/datasets/sintel.py')  # 1064
 sintel.train.augmentations = train_augmentations
+sintel.train.return_super_pixel_label = True
 
 spring = LazyConfig.load('cfgs/common/datasets/spring.py')  # 5000
 spring.train.augmentations = train_augmentations
 spring.train.return_right_disp = False
+spring.train.return_super_pixel_label = True
 
 virtualkitti2 = LazyConfig.load('cfgs/common/datasets/virtualkitti2.py')  # 21260
 virtualkitti2.train.augmentations = train_augmentations
 virtualkitti2.train.return_right_disp = False
+virtualkitti2.train.return_super_pixel_label = True
+
+foundationstereo = LazyConfig.load('cfgs/common/datasets/foundationstereo.py')
+foundationstereo.train.augmentations = train_augmentations
+foundationstereo.train.return_super_pixel_label = True
+
+unrealstereo4k = LazyConfig.load('cfgs/common/datasets/unrealstereo4k.py')
+unrealstereo4k.train.augmentations = train_augmentations
+unrealstereo4k.train.return_right_disp = False
+unrealstereo4k.train.return_super_pixel_label = True
+
+argoverse = LazyConfig.load('cfgs/common/datasets/argoverse.py')
+argoverse.train.augmentations = train_augmentations
+argoverse.train.return_super_pixel_label = True
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[tartanair.train, carla.train, carla.weather_train, crestereo.train, spring.train, sintel.train, dynamic.train, fallingthings.train, instereo2k.train, virtualkitti2.train],
+    all_dataset=[foundationstereo.train, carla.train, carla.weather_train, tartanair.train,
+                 crestereo.train, spring.train, sintel.train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -124,6 +148,6 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF')
-runtime_params.max_iter = 85000
+runtime_params.max_iter = 160000
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
