@@ -1,0 +1,54 @@
+####################################################################################################
+## 如何使用该配置文件, 进行自定义任务的提交:
+## # volc ml_task submit -c job_conf_example.yaml
+## Volc 命令行支持使用 --set 对配置文件中的配置项进行复写. 举例如下:
+## $ volc ml_task submit -c job_conf_example.yaml --set TaskName=yyy --set Tags={a,b,c} 
+## 上述命令将会把任务配置文件中的 TaskName 替换成 yyy, Tags 替换成 
+## Tags:
+##  - "a"
+##  - "b"
+##  - "c"
+## 其中 --set 支持多个字段的复写或者用 ',' 分割的多个配置项, 例如 '--set a=1 --set b=2' 和 '--set a=1,b=2' 等价
+####################################################################################################
+
+TaskName: "test"
+
+Tags:
+    - "zzz"
+    - "anything"
+
+AccessType: "Queue"
+AccessUsers:
+    - "baai-cwm"
+
+ImageUrl: "vemlp-cn-beijing.cr.volces.com/preset-images/cuda:12.2.2"
+
+Entrypoint: "echo 'hello'"
+
+Envs:
+    -   Name: "TORCH_HOME"
+        Value: "/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/.cache/torch"
+        IsPrivate: false
+    -   Name: "HF_HOME"
+        Value: "/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/chm/.cache/huggingface"
+        IsPrivate: false
+
+ResourceQueueName: "baai-cwm-csrc03-queue"
+
+Priority: 6
+
+Framework: "PyTorchDDP"
+TaskRoleSpecs:
+    -   RoleName: "worker"
+        RoleReplicas: 1
+        Flavor: "ml.gni3cgd.45xlarge"
+
+Storages:
+    -   Type: "Vepfs"
+        MountPath: "/baai-cwm-1/baai_cwm_ml"
+        VepfsId: "vepfs-cnbj19be3d640c1c"
+        SubPath: "/baai_cwm_ml"
+    -   Type: "Nas"
+        MountPath: "/baai-cwm-nas"
+        NasId: "cnas-b0a8da641dc7ab"
+        NasAddr: "b0a8da641dc7ab.mji23i10x4ow5smt1as0f0jm.nas.ivolces.com/cnas-b0a8da641dc7ab"

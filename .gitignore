@@ -4,6 +4,4 @@
 submit.py
 test.py
 tools/convert.py
-tools/scripts
 misc/
-cfgs/env.ini
