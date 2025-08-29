@@ -29,7 +29,7 @@ train_bdd_realfill = LazyCall(RealfillDataset)(
 
 train_objects365_realfill = LazyCall(RealfillDataset)(
     data_root_path=data_root_path,
-    split_file='/baai-cwm-1/baai_cwm_ml/algorithm/xianda.guo/code/Wrl/OpenStereo/objects365/object365_path_txt/leftRightDisp.txt',
+    split_file='/file_system/vepfs/algorithm/ruilin.wang/code/a800/realfill/path_txt/leftrightdisp_clean.txt',
     augmentations=None,
 )
 

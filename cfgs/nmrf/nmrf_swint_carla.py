@@ -26,15 +26,17 @@ train_augmentations = [
     LazyCall(stereo_trans.NormalizeImage)(mean=constants.imagenet_rgb_mean, std=constants.imagenet_rgb_std)
 ]
 
-data = LazyConfig.load('cfgs/common/datasets/carla.py')
-data.train.augmentations = train_augmentations
-data.weather_train.augmentations = train_augmentations
+carla = LazyConfig.load('cfgs/common/datasets/carla.py')  # 552050
+carla.train.augmentations = train_augmentations
+carla.weather_train.augmentations = train_augmentations
+carla.train.return_super_pixel_label = True
+carla.weather_train.return_super_pixel_label = True
 
 # dataloader
 batch_size_per_gpu = 2
 train_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[carla.train, carla.weather_train],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -43,7 +45,7 @@ train_loader = LazyCall(build_dataloader)(
 
 val_loader = LazyCall(build_dataloader)(
     is_dist=None,
-    all_dataset=[data.train],
+    all_dataset=[carla.train, carla.weather_train],
     batch_size=batch_size_per_gpu * 2,
     shuffle=False,
     workers=8,
@@ -94,8 +96,7 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
-# runtime params max_iter=500000, all_batchsize=1, lr=0.0005
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/CarlaDataset/NMRF')
-runtime_params.train_epochs = 1
+runtime_params.max_iter = int(700000/16)
 runtime_params.eval_period = 10
 runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')

@@ -91,7 +91,7 @@ train_loader = LazyCall(build_dataloader)(
     all_dataset=[foundationstereo.train, carla.train, carla.weather_train, tartanair.train,
                  crestereo.train, spring.train, sintel.train,
                  dynamic.train, fallingthings.train, instereo2k.train,
-                 virtualkitti2.train],
+                 virtualkitti2.train, mono.train_objects365_realfill],
     batch_size=batch_size_per_gpu,
     shuffle=True,
     workers=8,
@@ -153,6 +153,6 @@ scheduler = LazyCall(OneCycleLR)(optimizer=None, max_lr=lr, total_steps=-1, pct_
 clip_grad = LazyCall(ClipGradNorm)(max_norm=1.0)
 
 runtime_params.save_root_dir = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF')
-runtime_params.max_iter = 160000
+runtime_params.train_epochs = 1
 runtime_params.eval_period = 10
-runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/SceneFlowDataset/NMRF/swint/ckpt/epoch_67/pytorch_model.bin')
+runtime_params.pretrained_model = os.path.join(ckpt_root_dir, 'output/MixDataset/NMRF/mix10/ckpt/epoch_2/pytorch_model.bin')
